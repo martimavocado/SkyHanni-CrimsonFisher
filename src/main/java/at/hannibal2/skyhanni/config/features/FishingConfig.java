@@ -136,6 +136,15 @@ public class FishingConfig {
 
     @Expose
     @ConfigOption(
+            name = "Lava Fishing",
+            desc = "Show the Barn Fishing Timer even while in the Crimson Isle."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 2)
+    public boolean barnTimerCrimsonIsle = true;
+
+    @Expose
+    @ConfigOption(
             name = "Stranded Fishing",
             desc = "Show the Barn Fishing Timer even on all the different islands Stranded players can visit."
     )

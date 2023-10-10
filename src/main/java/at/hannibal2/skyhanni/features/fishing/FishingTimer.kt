@@ -80,8 +80,13 @@ class FishingTimer {
         }.sum()
 
     private fun isRightLocation(): Boolean {
+        var currentIsland = LorenzUtils.skyBlockIsland
         inHollows = false
 
+	if (config.barnTimerCrimsonIsle && IslandType.CRIMSON_ISLE.isInIsland()) {
+            return true
+        }
+        
         if (config.barnTimerForStranded && LorenzUtils.isStrandedProfile) return true
 
         if (config.barnTimerCrystalHollows && IslandType.CRYSTAL_HOLLOWS.isInIsland()) {
