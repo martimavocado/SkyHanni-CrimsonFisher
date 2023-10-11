@@ -112,61 +112,70 @@ public class FishingConfig {
     @ConfigEditorAccordion(id = 2)
     public boolean barnTimer_ = false;
 
-    @Expose
-    @ConfigOption(
-            name = "Barn Fishing Timer",
-            desc = "Show the time and amount of sea creatures while fishing on the barn via hub."
-    )
-    @ConfigEditorBoolean
-    @ConfigAccordionId(id = 2)
-    @FeatureToggle
-    public boolean barnTimer = true;
+        @Expose
+        @ConfigOption(
+                name = "Barn Fishing Timer",
+                desc = "Show the time and amount of sea creatures while fishing on the barn via hub."
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        @FeatureToggle
+        public boolean barnTimer = true;
 
-    @Expose
-    public Position barnTimerPos = new Position(10, 10, false, true);
+        @Expose
+        public Position barnTimerPos = new Position(10, 10, false, true);
 
-    @Expose
-    @ConfigOption(
-            name = "Worm Fishing",
-            desc = "Show the Barn Fishing Timer even for worms or other sea creatures in the Crystal Hollows."
-    )
-    @ConfigEditorBoolean
-    @ConfigAccordionId(id = 2)
-    public boolean barnTimerCrystalHollows = true;
+        @Expose
+        @ConfigOption(
+                name = "Worm Fishing",
+                desc = "Show the Barn Fishing Timer even for worms or other sea creatures in the Crystal Hollows."
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean barnTimerCrystalHollows = true;
 
-    @Expose
-    @ConfigOption(
-            name = "Stranded Fishing",
-            desc = "Show the Barn Fishing Timer even on all the different islands Stranded players can visit."
-    )
-    @ConfigEditorBoolean
-    @ConfigAccordionId(id = 2)
-    public boolean barnTimerForStranded = true;
+        @Expose
+        @ConfigOption(
+                name = "Lava Fishing",
+                desc = "Show the Barn Fishing Timer even while in the Crimson Isle."
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean barnTimerCrimsonIsle = true;
 
-    @Expose
-    @ConfigOption(
-            name = "Worm Cap Alert",
-            desc = "Alerts you with sound if you hit the Worm Sea Creature limit of 60."
-    )
-    @ConfigEditorBoolean
-    @ConfigAccordionId(id = 2)
-    public boolean wormLimitAlert = true;
+        @Expose
+        @ConfigOption(
+                name = "Stranded Fishing",
+                desc = "Show the Barn Fishing Timer even on all the different islands Stranded players can visit."
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean barnTimerForStranded = true;
 
-    @Expose
-    @ConfigOption(name = "Reset Timer Hotkey", desc = "Press this key to reset the timer manualy")
-    @ConfigEditorKeybind(defaultKey = Keyboard.KEY_NONE)
-    @ConfigAccordionId(id = 2)
-    public int manualResetTimer = Keyboard.KEY_NONE;
+        @Expose
+        @ConfigOption(
+                name = "Worm Cap Alert",
+                desc = "Alerts you with sound if you hit the Worm Sea Creature limit of 60."
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean wormLimitAlert = true;
 
-    @Expose
-    @ConfigOption(name = "Fishing Timer Alert", desc = "Change the amount of time in seconds until the timer dings.")
-    @ConfigEditorSlider(
-            minValue = 240,
-            maxValue = 360,
-            minStep = 10
-    )
-    @ConfigAccordionId(id = 2)
-    public int barnTimerAlertTime = 330;
+        @Expose
+        @ConfigOption(name = "Reset Timer Hotkey", desc = "Press this key to reset the timer manualy")
+        @ConfigEditorKeybind(defaultKey = Keyboard.KEY_NONE)
+        @ConfigAccordionId(id = 2)
+        public int manualResetTimer = Keyboard.KEY_NONE;
+
+        @Expose
+        @ConfigOption(name = "Fishing Timer Alert", desc = "Change the amount of time in seconds until the timer dings.")
+        @ConfigEditorSlider(
+                minValue = 240,
+                maxValue = 360,
+                minStep = 10
+        )
+        @ConfigAccordionId(id = 2)
+        public int barnTimerAlertTime = 330;
 
     @Expose
     @ConfigOption(name = "Chum/Chumcap Bucket Hider", desc = "")
