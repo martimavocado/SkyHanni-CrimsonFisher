@@ -675,6 +675,28 @@ public class MiscConfig {
     }
 
     @Expose
+    @ConfigOption(name = "Player Chat Symbols", desc = "")
+    @Accordion
+    public ChatSymbols chatSymbols = new ChatSymbols();
+
+    public static class ChatSymbols {
+
+        @Expose
+        @ConfigOption(name = "Enabled", desc = "Adds extra symbols to the chat such as those from ironman, " +
+                "stranded, bingo or nether factions and places them next to your regular player emblems. " +
+                "Also allows emblems without sb level in chat.")
+        @ConfigEditorBoolean
+        @FeatureToggle
+        public boolean enabled = true;
+
+        @Expose
+        @ConfigOption(name = "Chat Symbol Location", desc = "Determines where the symbols should go in chat in relation to the " +
+                "player's name. Hidden will hide all emblems from the chat. §eRequires above setting to be on to hide the symbols.")
+        @ConfigEditorDropdown(values = {"Left", "Right", "Hidden"})
+        public int symbolLocation = 0;
+    }
+
+    @Expose
     @ConfigOption(name = "Exp Bottles", desc = "Hides all the experience orbs lying on the ground.")
     @ConfigEditorBoolean
     @FeatureToggle
@@ -776,6 +798,24 @@ public class MiscConfig {
     @ConfigEditorBoolean
     @FeatureToggle
     public boolean fixNeuHeavyPearls = true;
+
+        @Expose
+        @ConfigOption(name = "Main Lobby Halloween Basket Waypoints", desc = "")
+        @Accordion
+        public halloweenBasketConfig halloweenBasket = new halloweenBasketConfig();
+
+        public static class halloweenBasketConfig {
+
+                @Expose
+                @ConfigOption(name = "Basket Waypoints", desc = "Show all Halloween Basket waypoints.\nShoutout to §bTobbbb §7for the coordinates.\n(AS OF 2023)")
+                @ConfigEditorBoolean
+                public boolean allWaypoints = false;
+
+                @Expose
+                @ConfigOption(name = "Helper Waypoints", desc = "Show helper waypoints to Baskets #23, #24, and #25. Coordinates by §bErymanthus§7.")
+                @ConfigEditorBoolean
+                public boolean allEntranceWaypoints = false;
+        }
 
     @Expose
     @ConfigOption(
