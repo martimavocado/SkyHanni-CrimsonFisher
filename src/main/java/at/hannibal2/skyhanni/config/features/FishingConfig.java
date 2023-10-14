@@ -145,6 +145,15 @@ public class FishingConfig {
 
         @Expose
         @ConfigOption(
+                name = "Jerry Fishing",
+                desc = "Show the Barn Fishing Timer even while in the Jerry's Workshop."
+        )
+        @ConfigEditorBoolean
+        @ConfigAccordionId(id = 2)
+        public boolean barnTimerWinterIsland = true;
+
+        @Expose 
+        @ConfigOption(
                 name = "Stranded Fishing",
                 desc = "Show the Barn Fishing Timer even on all the different islands Stranded players can visit."
         )
