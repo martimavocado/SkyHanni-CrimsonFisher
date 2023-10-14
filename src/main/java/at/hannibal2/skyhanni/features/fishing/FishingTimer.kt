@@ -89,6 +89,10 @@ class FishingTimer {
             return true
         }
 
+        if (config.barnTimerCrimsonIsle && IslandType.CRIMSON_ISLE.isInIsland()) return true
+
+        if (config.barnTimerWinterIsland && IslandType.WINTER.isInIsland()) return true
+        
         if (!IslandType.THE_FARMING_ISLANDS.isInIsland()) {
             return LocationUtils.playerLocation().distance(barnLocation) < 50
         }

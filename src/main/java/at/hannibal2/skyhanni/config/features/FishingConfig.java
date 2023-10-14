@@ -134,6 +134,25 @@ public class FishingConfig {
     @ConfigAccordionId(id = 2)
     public boolean barnTimerCrystalHollows = true;
 
+
+    @Expose
+    @ConfigOption(
+            name = "Lava Fishing",
+            desc = "Show the Barn Fishing Timer even while in the Crimson Isle."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 2)
+    public boolean barnTimerCrimsonIsle = true;
+
+    @Expose
+    @ConfigOption(
+            name = "Jerry Fishing",
+            desc = "Show the Barn Fishing Timer even while in the Jerry's Workshop."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 2)
+    public boolean barnTimerWinterIsland = true;
+    
     @Expose
     @ConfigOption(
             name = "Stranded Fishing",
