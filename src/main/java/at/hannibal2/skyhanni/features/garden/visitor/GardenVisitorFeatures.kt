@@ -7,6 +7,7 @@ import at.hannibal2.skyhanni.events.GuiRenderEvent
 import at.hannibal2.skyhanni.events.InventoryCloseEvent
 import at.hannibal2.skyhanni.events.InventoryFullyOpenedEvent
 import at.hannibal2.skyhanni.events.LorenzChatEvent
+import at.hannibal2.skyhanni.events.LorenzRenderWorldEvent
 import at.hannibal2.skyhanni.events.LorenzTickEvent
 import at.hannibal2.skyhanni.events.OwnInventoryItemUpdateEvent
 import at.hannibal2.skyhanni.events.PacketEvent
@@ -21,7 +22,7 @@ import at.hannibal2.skyhanni.features.garden.CropType.Companion.getByNameOrNull
 import at.hannibal2.skyhanni.features.garden.GardenAPI
 import at.hannibal2.skyhanni.features.garden.farming.GardenCropSpeed.getSpeed
 import at.hannibal2.skyhanni.mixins.hooks.RenderLivingEntityHelper
-import at.hannibal2.skyhanni.test.command.CopyErrorCommand
+import at.hannibal2.skyhanni.test.command.ErrorManager
 import at.hannibal2.skyhanni.utils.EntityUtils
 import at.hannibal2.skyhanni.utils.InventoryUtils
 import at.hannibal2.skyhanni.utils.ItemBlink
@@ -63,7 +64,6 @@ import net.minecraft.item.ItemStack
 import net.minecraft.network.play.client.C02PacketUseEntity
 import net.minecraftforge.client.event.GuiScreenEvent.DrawScreenEvent
 import net.minecraftforge.client.event.RenderLivingEvent
-import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.event.entity.player.ItemTooltipEvent
 import net.minecraftforge.fml.common.eventhandler.EventPriority
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
@@ -167,7 +167,7 @@ class GardenVisitorFeatures {
 
         println("visitors: $visitors")
         println("name: $name")
-        CopyErrorCommand.logErrorState(
+        ErrorManager.logErrorState(
             "Error finding the visitor `$name§c`. Try to reopen the inventory",
             "visitor is null! name='$name', visitors=`$visitors`"
         )
@@ -357,7 +357,7 @@ class GardenVisitorFeatures {
     }
 
     @SubscribeEvent
-    fun onRenderWorld(event: RenderWorldLastEvent) {
+    fun onRenderWorld(event: LorenzRenderWorldEvent) {
         if (!GardenAPI.inGarden()) return
         if (!GardenAPI.onBarnPlot) return
         if (config.visitorHighlightStatus != 1 && config.visitorHighlightStatus != 2) return
