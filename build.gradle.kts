@@ -11,11 +11,7 @@ plugins {
 }
 
 group = "at.hannibal2.skyhanni"
-<<<<<<< HEAD
-version = "0.21.Beta.7.LavaFishing"
-=======
 version = "0.21.Beta.8.1"
->>>>>>> e1f9b4a7da817d9e9a46c58325b4823cb96237d3
 
 // Toolchains:
 java {
