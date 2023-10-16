@@ -4,8 +4,6 @@ import at.hannibal2.skyhanni.config.FeatureToggle;
 import at.hannibal2.skyhanni.config.core.config.Position;
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.moulconfig.annotations.Accordion;
-import io.github.moulberry.moulconfig.annotations.ConfigAccordionId;
-import io.github.moulberry.moulconfig.annotations.ConfigEditorAccordion;
 import io.github.moulberry.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.moulberry.moulconfig.annotations.ConfigEditorColour;
 import io.github.moulberry.moulconfig.annotations.ConfigEditorDropdown;
@@ -91,48 +89,45 @@ public class FishingConfig {
         public boolean odgerLocation = true;
     }
 
+    @Expose
     @ConfigOption(name = "Thunder Spark", desc = "")
-    @ConfigEditorAccordion(id = 1)
-    public boolean thunderSpark = false;
+    @Accordion
+    public ThunderSparkConfig thunderSpark = new ThunderSparkConfig();
+    public static class ThunderSparkConfig {
+        @Expose
+        @ConfigOption(name = "Thunder Spark Highlight", desc = "Highlight Thunder Sparks after killing a Thunder.")
+        @ConfigEditorBoolean
+        @FeatureToggle
+        public boolean highlight = false;
+
+        @Expose
+        @ConfigOption(name = "Thunder Spark Color", desc = "Color of the Thunder Sparks.")
+        @ConfigEditorColour
+        public String color = "0:255:255:255:255";
+    }
 
     @Expose
-    @ConfigOption(name = "Thunder Spark Highlight", desc = "Highlight Thunder Sparks after killing a Thunder.")
-    @ConfigEditorBoolean
-    @ConfigAccordionId(id = 1)
-    @FeatureToggle
-    public boolean thunderSparkHighlight = false;
-
-    @Expose
-    @ConfigOption(name = "Thunder Spark Color", desc = "Color of the Thunder Sparks.")
-    @ConfigEditorColour
-    @ConfigAccordionId(id = 1)
-    public String thunderSparkColor = "0:255:255:255:255";
-
     @ConfigOption(name = "Barn Fishing Timer", desc = "")
-    @ConfigEditorAccordion(id = 2)
-    public boolean barnTimer_ = false;
-
+    @Accordion
+    public BarnTimerConfig barnTimer = new BarnTimerConfig();
+    public static class BarnTimerConfig{
         @Expose
         @ConfigOption(
                 name = "Barn Fishing Timer",
                 desc = "Show the time and amount of sea creatures while fishing on the barn via hub."
         )
         @ConfigEditorBoolean
-        @ConfigAccordionId(id = 2)
         @FeatureToggle
-        public boolean barnTimer = true;
+        public boolean enabled = true;
 
-        @Expose
-        public Position barnTimerPos = new Position(10, 10, false, true);
-
-        @Expose
-        @ConfigOption(
-                name = "Worm Fishing",
-                desc = "Show the Barn Fishing Timer even for worms or other sea creatures in the Crystal Hollows."
-        )
-        @ConfigEditorBoolean
-        @ConfigAccordionId(id = 2)
-        public boolean barnTimerCrystalHollows = true;
+    @Expose
+    @ConfigOption(
+            name = "Worm Fishing",
+            desc = "Show the Barn Fishing Timer even for worms or other sea creatures in the Crystal Hollows."
+    )
+    @ConfigEditorBoolean
+    @ConfigAccordionId(id = 2)
+    public boolean crystalHollows = true;
 
         @Expose
         @ConfigOption(
@@ -141,7 +136,7 @@ public class FishingConfig {
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2)
-        public boolean barnTimerCrimsonIsle = true;
+        public boolean crimsonIsle = true;
 
         @Expose
         @ConfigOption(
@@ -150,7 +145,7 @@ public class FishingConfig {
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2)
-        public boolean barnTimerWinterIsland = true;
+        public boolean winterIsland = true;
 
         @Expose 
         @ConfigOption(
@@ -159,7 +154,7 @@ public class FishingConfig {
         )
         @ConfigEditorBoolean
         @ConfigAccordionId(id = 2)
-        public boolean barnTimerForStranded = true;
+        public boolean forStranded = true;
 
         @Expose
         @ConfigOption(
@@ -167,13 +162,11 @@ public class FishingConfig {
                 desc = "Alerts you with sound if you hit the Worm Sea Creature limit of 60."
         )
         @ConfigEditorBoolean
-        @ConfigAccordionId(id = 2)
         public boolean wormLimitAlert = true;
 
         @Expose
         @ConfigOption(name = "Reset Timer Hotkey", desc = "Press this key to reset the timer manualy")
         @ConfigEditorKeybind(defaultKey = Keyboard.KEY_NONE)
-        @ConfigAccordionId(id = 2)
         public int manualResetTimer = Keyboard.KEY_NONE;
 
         @Expose
@@ -184,14 +177,14 @@ public class FishingConfig {
                 minStep = 10
         )
         @ConfigAccordionId(id = 2)
-        public int barnTimerAlertTime = 330;
+        public int alertTime = 330;
 
     @Expose
     @ConfigOption(name = "Chum/Chumcap Bucket Hider", desc = "")
     @Accordion
-    public ChumBucketHider chumBucketHider = new ChumBucketHider();
+    public ChumBucketHiderConfig chumBucketHider = new ChumBucketHiderConfig();
 
-    public static class ChumBucketHider {
+    public static class ChumBucketHiderConfig {
 
         @Expose
         @ConfigOption(name = "Enable", desc = "Hide the Chum/Chumcap Bucket name tags for other players.")
@@ -213,9 +206,9 @@ public class FishingConfig {
     @Expose
     @ConfigOption(name = "Fished Item Name", desc = "")
     @Accordion
-    public FishedItemName fishedItemName = new FishedItemName();
+    public FishedItemNameConfig fishedItemName = new FishedItemNameConfig();
 
-    public static class FishedItemName {
+    public static class FishedItemNameConfig {
 
         @Expose
         @ConfigOption(name = "Enabled", desc = "Show the fished item name above the item when fishing.")
@@ -233,9 +226,9 @@ public class FishingConfig {
     @Expose
     @ConfigOption(name = "Fishing Hook Display", desc = "")
     @Accordion
-    public FishingHookDisplay fishingHookDisplay = new FishingHookDisplay();
+    public FishingHookDisplayConfig fishingHookDisplay = new FishingHookDisplayConfig();
 
-    public static class FishingHookDisplay {
+    public static class FishingHookDisplayConfig {
 
         @Expose
         @ConfigOption(name = "Enabled", desc = "Display the Hypixel timer until the fishing hook can be pulled out of the water/lava, only bigger and on your screen.")
@@ -253,38 +246,38 @@ public class FishingConfig {
 
         @Expose
         public Position position = new Position(460, -240, 3.4f);
-
-        @Expose
-        @ConfigOption(
-                name = "Debug: Update Interval",
-                desc = "Changes the time in ticks between updates (should be as high as possible). Default is 20"
-        )
-        @ConfigEditorSlider(
-                minValue = 1,
-                maxValue = 80,
-                minStep = 1
-        )
-        public int debugUpdateInterval = 20;
-
-        @Expose
-        @ConfigOption(
-                name = "Debug: Distance",
-                desc = "Changes the maximal detection distance between the fishing rod bobber and " +
-                        "the armor stand that shows the hypixel timer (should be as low as possible). Default is 0.1"
-        )
-        @ConfigEditorSlider(
-                minValue = 0.01f,
-                maxValue = 5f,
-                minStep = 0.01f
-        )
-        public double debugMaxDistance = 0.1;
     }
 
     @Expose
-    @ConfigOption(name = "Highlight Rare", desc = "Highlight Rare Sea Creatures in blue color.")
-    @ConfigEditorBoolean
-    @FeatureToggle
-    public boolean rareSeaCreatureHighlight = false;
+    @ConfigOption(name = "Rare Sea Creatures", desc = "")
+    @Accordion
+    public RareCatches rareCatches = new RareCatches();
+
+    public static class RareCatches {
+
+        @Expose
+        @ConfigOption(name = "Alert (Own Sea Creatures)", desc = "Show an alert on screen when you catch a rare sea creature.")
+        @ConfigEditorBoolean
+        @FeatureToggle
+        public boolean alertOwnCatches = true;
+
+        @Expose
+        @ConfigOption(name = "Alert (Other Sea Creatures)", desc = "Show an alert on screen when other players nearby catch a rare sea creature.")
+        @ConfigEditorBoolean
+        public boolean alertOtherCatches = false;
+
+        @Expose
+        @ConfigOption(name = "Play Sound Alert", desc = "Play a sound effect when rare sea creature alerts are displayed.")
+        @ConfigEditorBoolean
+        public boolean playSound = true;
+
+        @Expose
+        @ConfigOption(name = "Highlight", desc = "Highlight nearby rare sea creatures.")
+        @ConfigEditorBoolean
+        @FeatureToggle
+        public boolean highlight = false;
+
+    }
 
     @Expose
     @ConfigOption(
