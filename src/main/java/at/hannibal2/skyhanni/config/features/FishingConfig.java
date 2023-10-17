@@ -120,14 +120,13 @@ public class FishingConfig {
         @FeatureToggle
         public boolean enabled = true;
 
-    @Expose
-    @ConfigOption(
-            name = "Worm Fishing",
-            desc = "Show the Barn Fishing Timer even for worms or other sea creatures in the Crystal Hollows."
-    )
-    @ConfigEditorBoolean
-    @ConfigAccordionId(id = 2)
-    public boolean crystalHollows = true;
+        @Expose
+        @ConfigOption(
+                name = "Worm Fishing",
+                desc = "Show the Barn Fishing Timer even for worms or other sea creatures in the Crystal Hollows."
+        )
+        @ConfigEditorBoolean
+        public boolean crystalHollows = true;
 
         @Expose
         @ConfigOption(
@@ -135,7 +134,6 @@ public class FishingConfig {
                 desc = "Show the Barn Fishing Timer even while in the Crimson Isle."
         )
         @ConfigEditorBoolean
-        @ConfigAccordionId(id = 2)
         public boolean crimsonIsle = true;
 
         @Expose
@@ -144,16 +142,14 @@ public class FishingConfig {
                 desc = "Show the Barn Fishing Timer even while in the Jerry's Workshop."
         )
         @ConfigEditorBoolean
-        @ConfigAccordionId(id = 2)
         public boolean winterIsland = true;
 
-        @Expose 
+        @Expose
         @ConfigOption(
                 name = "Stranded Fishing",
                 desc = "Show the Barn Fishing Timer even on all the different islands Stranded players can visit."
         )
         @ConfigEditorBoolean
-        @ConfigAccordionId(id = 2)
         public boolean forStranded = true;
 
         @Expose
@@ -176,8 +172,11 @@ public class FishingConfig {
                 maxValue = 360,
                 minStep = 10
         )
-        @ConfigAccordionId(id = 2)
         public int alertTime = 330;
+
+        @Expose
+        public Position pos = new Position(10, 10, false, true);
+    }
 
     @Expose
     @ConfigOption(name = "Chum/Chumcap Bucket Hider", desc = "")
