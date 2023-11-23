@@ -217,6 +217,10 @@ object Commands {
             "Print current island in chat"
         ) { SkyHanniDebugsAndTests.whereami() }
         registerCommand(
+            "shresetcropspeed",
+            "Resets blocks/second in the crop milestones gui"
+        ) { SkyHanniDebugsAndTests.resetCropSpeed() }
+        registerCommand(
             "shconfig",
             "Search or reset config elements §c(warning, dangerous!)"
         ) { SkyHanniConfigSearchResetCommand.command(it) }

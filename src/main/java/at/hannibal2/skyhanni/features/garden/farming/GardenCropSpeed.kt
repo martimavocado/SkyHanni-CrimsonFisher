@@ -163,7 +163,7 @@ object GardenCropSpeed {
         }
     }
 
-    private fun resetSpeed() {
+    fun resetSpeed() {
         averageBlocksPerSecond = 0.0
         blocksSpeedList = emptyList()
         secondsStopped = 0

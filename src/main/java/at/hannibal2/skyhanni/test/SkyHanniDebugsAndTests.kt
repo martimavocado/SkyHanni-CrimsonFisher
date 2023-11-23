@@ -6,6 +6,7 @@ import at.hannibal2.skyhanni.config.ConfigGuiManager
 import at.hannibal2.skyhanni.config.ConfigManager
 import at.hannibal2.skyhanni.config.ConfigUpdaterMigrator
 import at.hannibal2.skyhanni.data.HypixelData
+import at.hannibal2.skyhanni.data.IslandType
 import at.hannibal2.skyhanni.data.SlayerAPI
 import at.hannibal2.skyhanni.events.GuiRenderEvent
 import at.hannibal2.skyhanni.events.LorenzChatEvent
@@ -13,6 +14,7 @@ import at.hannibal2.skyhanni.events.LorenzRenderWorldEvent
 import at.hannibal2.skyhanni.events.PlaySoundEvent
 import at.hannibal2.skyhanni.events.ReceiveParticleEvent
 import at.hannibal2.skyhanni.features.dungeon.DungeonAPI
+import at.hannibal2.skyhanni.features.garden.farming.GardenCropSpeed
 import at.hannibal2.skyhanni.features.garden.visitor.GardenVisitorColorNames
 import at.hannibal2.skyhanni.test.GriffinUtils.drawWaypointFilled
 import at.hannibal2.skyhanni.utils.InventoryUtils
@@ -256,6 +258,14 @@ class SkyHanniDebugsAndTests {
                 return
             }
             LorenzUtils.chat("§eYou are not in Skyblock.")
+        }
+
+        fun resetCropSpeed() {
+            if (LorenzUtils.skyBlockIsland == IslandType.GARDEN) {
+                GardenCropSpeed.resetSpeed()
+                return
+            }
+            LorenzUtils.debug("§eYou are not in the Garden.")
         }
 
         fun copyLocation(args: Array<String>) {
