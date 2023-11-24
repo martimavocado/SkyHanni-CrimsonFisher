@@ -162,12 +162,13 @@ class ComposterDisplay {
 
     @SubscribeEvent
     fun onRenderOverlay(event: GuiRenderEvent.GuiOverlayRenderEvent) {
-        if (!LorenzUtils.inSkyBlock) return
-
-        if (GardenAPI.inGarden() && config.displayEnabled) {
+        if (GardenAPI.inGarden() && config.displayEnabled && LorenzUtils.inSkyBlock) {
             config.displayPos.renderStringsAndItems(display, posLabel = "Composter Display")
         }
 
+        if (!config.displayOutsideSkyblock) {
+            if (!LorenzUtils.inSkyBlock) return
+        }
         checkWarningsAndOutsideGarden()
     }
 

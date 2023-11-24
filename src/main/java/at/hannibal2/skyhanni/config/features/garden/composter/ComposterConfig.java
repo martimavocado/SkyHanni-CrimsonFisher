@@ -54,6 +54,15 @@ public class ComposterConfig {
 
     @Expose
     @ConfigOption(
+        name = "Outside Skyblock",
+        desc = "Show Time till Composter is empty outside Skyblock"
+    )
+    @ConfigEditorBoolean
+    @FeatureToggle
+    public boolean displayOutsideSkyblock = false;
+
+    @Expose
+    @ConfigOption(
         name = "Composter Warning",
         desc = "Warn when the Composter gets close to empty, even outside Garden."
     )
