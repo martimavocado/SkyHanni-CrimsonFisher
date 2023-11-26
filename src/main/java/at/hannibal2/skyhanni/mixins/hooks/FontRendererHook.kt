@@ -59,7 +59,7 @@ object FontRendererHook {
 
     @JvmStatic
     fun beginChromaRendering(text: String, shadow: Boolean) {
-        if (!LorenzUtils.inSkyBlock) return
+        if (!LorenzUtils.inSkyBlock && !SkyHanniMod.feature.chroma.outsideSkyblock) return
         if (!SkyHanniMod.feature.chroma.enabled) return
 
         if (text == "§fPlease star the mod on GitHub!") {
@@ -92,14 +92,14 @@ object FontRendererHook {
 
     @JvmStatic
     fun toggleChromaOn() {
-        if (!LorenzUtils.inSkyBlock) return
+        if (!LorenzUtils.inSkyBlock && !SkyHanniMod.feature.chroma.outsideSkyblock) return
 
         currentDrawState?.newChromaEnv()?.bindActualColor()
     }
 
     @JvmStatic
     fun forceWhiteColorCode(i1: Int): Int {
-        if (!LorenzUtils.inSkyBlock) return i1
+        if (!LorenzUtils.inSkyBlock && !SkyHanniMod.feature.chroma.outsideSkyblock) return i1
 
         if (!SkyHanniMod.feature.chroma.enabled) return i1
 
@@ -115,7 +115,7 @@ object FontRendererHook {
 
     @JvmStatic
     fun restoreChromaState() {
-        if (!LorenzUtils.inSkyBlock) return
+        if (!LorenzUtils.inSkyBlock && !SkyHanniMod.feature.chroma.outsideSkyblock) return
         if (!SkyHanniMod.feature.chroma.enabled) return
 
         currentDrawState?.restoreChromaEnv()
@@ -123,7 +123,7 @@ object FontRendererHook {
 
     @JvmStatic
     fun endChromaRendering() {
-        if (!LorenzUtils.inSkyBlock) return
+        if (!LorenzUtils.inSkyBlock && !SkyHanniMod.feature.chroma.outsideSkyblock) return
         if (!SkyHanniMod.feature.chroma.enabled) return
 
         if (previewChroma) {
@@ -151,7 +151,7 @@ object FontRendererHook {
         c0: Char,
         i1: Int
     ): Boolean {
-        if (!LorenzUtils.inSkyBlock) return false
+        if (!LorenzUtils.inSkyBlock && !SkyHanniMod.feature.chroma.outsideSkyblock) return false
         if (!SkyHanniMod.feature.chroma.enabled) return false
         if (i1 == 22) {
             toggleChromaOn()

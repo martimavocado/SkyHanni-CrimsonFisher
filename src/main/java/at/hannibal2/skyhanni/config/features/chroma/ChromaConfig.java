@@ -24,6 +24,12 @@ public class ChromaConfig {
     public boolean enabled = false;
 
     @Expose
+    @ConfigOption(name = "Enabled", desc = "Enables the feature outside Skyblock")
+    @ConfigEditorBoolean
+    @FeatureToggle
+    public boolean outsideSkyblock = false;
+
+    @Expose
     @ConfigOption(name = "Chroma Size", desc = "Change the size of each color in the chroma.")
     @ConfigEditorSlider(minValue = 1f, maxValue = 100f, minStep = 1f)
     public float chromaSize = 30f;
