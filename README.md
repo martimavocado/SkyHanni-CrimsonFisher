@@ -29,3 +29,15 @@ If you are interested in the technical side of SkyHanni, read
 the [Contributing Guide](https://github.com/hannibal002/SkyHanni/blob/beta/CONTRIBUTING.md).
 
 *Check out some other really cool 1.8.9 mods [here](https://sbmw.ca/mod-lists/skyblock-mod-list/)*
+
+
+
+changes from regular skyhanni: 
+
+- wrong depth strider warning for farming
+- /shresetcropspeed
+
+planned but not yet merged into origin:
+
+- limbo time pb
+- keybind to lower sensitivity
