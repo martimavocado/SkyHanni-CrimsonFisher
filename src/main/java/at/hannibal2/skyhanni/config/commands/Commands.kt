@@ -37,6 +37,7 @@ import at.hannibal2.skyhanni.features.minion.MinionFeatures
 import at.hannibal2.skyhanni.features.misc.CollectionTracker
 import at.hannibal2.skyhanni.features.misc.LockMouseLook
 import at.hannibal2.skyhanni.features.misc.MarkedPlayerManager
+import at.hannibal2.skyhanni.features.misc.customscoreboard.CustomScoreboard
 import at.hannibal2.skyhanni.features.misc.discordrpc.DiscordRPCManager
 import at.hannibal2.skyhanni.features.misc.massconfiguration.DefaultConfigFeatures
 import at.hannibal2.skyhanni.features.misc.visualwords.VisualWordGui
@@ -45,6 +46,7 @@ import at.hannibal2.skyhanni.test.PacketTest
 import at.hannibal2.skyhanni.test.SkyHanniConfigSearchResetCommand
 import at.hannibal2.skyhanni.test.SkyHanniDebugsAndTests
 import at.hannibal2.skyhanni.test.TestBingo
+import at.hannibal2.skyhanni.test.command.CopyActionBar
 import at.hannibal2.skyhanni.test.command.CopyItemCommand
 import at.hannibal2.skyhanni.test.command.CopyNearbyEntitiesCommand
 import at.hannibal2.skyhanni.test.command.CopyNearbyParticlesCommand
@@ -324,6 +326,10 @@ object Commands {
             "shconfigmanagerreset",
             "Reloads the config manager and rendering processors of MoulConfig. This §cWILL RESET §7your config, but also updating the java config files (names, description, orderings and stuff)."
         ) { SkyHanniDebugsAndTests.configManagerResetCommand(it) }
+        registerCommand(
+            "shcopyactionbar",
+            "Copies the actionbar to the clipboard"
+        ) { CopyActionBar.command(it) }
         registerCommand(
             "readcropmilestonefromclipboard",
             "Read crop milestone from clipboard. This helps fixing wrong crop milestone data"

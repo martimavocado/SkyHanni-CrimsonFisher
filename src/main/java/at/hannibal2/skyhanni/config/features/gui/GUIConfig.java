@@ -2,6 +2,7 @@ package at.hannibal2.skyhanni.config.features.gui;
 
 import at.hannibal2.skyhanni.config.FeatureToggle;
 import at.hannibal2.skyhanni.config.core.config.Position;
+import at.hannibal2.skyhanni.config.features.gui.customscoreboard.CustomScoreboardConfig;
 import at.hannibal2.skyhanni.data.GuiEditManager;
 import com.google.gson.annotations.Expose;
 import io.github.moulberry.moulconfig.annotations.Accordion;
@@ -37,6 +38,12 @@ public class GUIConfig {
     @ConfigOption(name = "Custom Text Box", desc = "")
     @Accordion
     public TextBoxConfig customTextBox = new TextBoxConfig();
+
+
+    @Expose
+    @ConfigOption(name = "Custom Scoreboard", desc = "")
+    @Accordion
+    public CustomScoreboardConfig customScoreboard = new CustomScoreboardConfig();
 
     @Expose
     @ConfigOption(name = "Real Time", desc = "Display the current computer time, a handy feature when playing in full-screen mode.")
