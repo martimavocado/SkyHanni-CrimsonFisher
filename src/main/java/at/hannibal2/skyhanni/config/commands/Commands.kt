@@ -218,7 +218,11 @@ object Commands {
         registerCommand(
             "shwhereami",
             "Print current island in chat"
-        ) { SkyHanniDebugsAndTests.whereami() }
+        ) { SkyHanniDebugsAndTests.whereAmI() }
+        registerCommand(
+            "shclearcontestdata",
+            "Resets Jacob's Contest Data"
+        ) { SkyHanniDebugsAndTests.clearContestData() }
         registerCommand(
             "shconfig",
             "Search or reset config elements §c(warning, dangerous!)"
@@ -424,6 +428,9 @@ object Commands {
     }
 
     private fun registerCommand(name: String, description: String, function: (Array<String>) -> Unit) {
+        if (commands.any { it.name.equals(name, ignoreCase = true) }) {
+            error("The command '$name is already registered!'")
+        }
         ClientCommandHandler.instance.registerCommand(SimpleCommand(name, createCommand(function)))
         commands.add(CommandInfo(name, description, currentCategory))
     }
