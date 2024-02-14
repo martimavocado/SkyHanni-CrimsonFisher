@@ -9,6 +9,7 @@ import com.google.gson.annotations.Expose;
 import io.github.moulberry.moulconfig.annotations.Accordion;
 import io.github.moulberry.moulconfig.annotations.Category;
 import io.github.moulberry.moulconfig.annotations.ConfigEditorBoolean;
+import io.github.moulberry.moulconfig.annotations.ConfigEditorSlider;
 import io.github.moulberry.moulconfig.annotations.ConfigOption;
 
 public class MiscConfig {
@@ -224,6 +225,13 @@ public class MiscConfig {
         desc = "Show a message in chat when toggling the /shmouselock.")
     @ConfigEditorBoolean
     public boolean lockMouseLookChatMessage = true;
+
+    @Expose
+    @ConfigOption(
+        name = "Ender Pearl Cooldown",
+        desc = "Adds a cooldown between throwing Ender Pearls in The End.")
+    @ConfigEditorSlider(minValue = 0.0F, maxValue = 10.0F, minStep = 0.1F)
+    public Float enderPearlCooldown = 0F;
 
     @Expose
     public Position showTimeInLimboPosition = new Position(400, 200, 1.3f);
