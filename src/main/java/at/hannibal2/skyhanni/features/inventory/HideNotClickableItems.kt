@@ -532,9 +532,8 @@ class HideNotClickableItems {
 
             return true
         }
-
         if (isNotAuctionable(stack)) return true
-
+        if (isNotRecommended(stack)) return true
         return false
     }
 
@@ -554,6 +553,16 @@ class HideNotClickableItems {
         val result = notAuctionableFilter.match(name)
         if (result) hideReason = "This item cannot be auctioned!"
         return result
+    }
+
+    private fun isNotRecommended(stack: ItemStack): Boolean {
+        val internalName = stack.getInternalName()
+
+        if (internalName == "THUNDER_IN_A_BOTTLE_EMPTY".asInternalName() && !stack.getLore()[3].contains("§7Charge: §e0")) {
+            hideReason = "This Thunder Bottle is not Empty!"
+            return true
+        }
+        return false
     }
 
     @SubscribeEvent
