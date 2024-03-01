@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose;
 import io.github.moulberry.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.moulberry.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.moulberry.moulconfig.annotations.ConfigOption;
+import io.github.moulberry.moulconfig.observer.Property;
 
 public class CosmeticsConfig {
     @Expose
@@ -14,7 +15,7 @@ public class CosmeticsConfig {
     @Expose
     @ConfigOption(name = "Highlight Name", desc = "Highlights your in-game name to all SkyHanni§c-§r users in tab.")
     @ConfigEditorBoolean
-    public boolean highlight = false;
+    public Property<Boolean> highlight = Property.of(false);
 
     public enum CloakType {
         CHROMA("Chroma"),
