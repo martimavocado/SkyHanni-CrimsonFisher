@@ -11,11 +11,10 @@ import net.minecraft.client.Minecraft
 import net.minecraft.util.ChatComponentText
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import kotlin.random.Random
-import kotlin.time.Duration.Companion.seconds
 
 class SkyHanniPlus {
     private var plusSubscription = false
-    private val delay: Int = 2
+    private val delay: Long = 2000
 
     private val config get() = SkyHanniMod.feature.plus
     private var isBusy = false
@@ -34,16 +33,16 @@ class SkyHanniPlus {
     }
 
     @SubscribeEvent
-    fun onLogin(event: HypixelJoinEvent) { //TODO: add random jitter to delay
-        if (plusSubscription) {
-            SkyHanniMod.coroutineScope.launch {
-                isBusy = true
-//                delay(delay.seconds)                  // i want to send to limbo to fake a staff ban, but auto limbo is not a good idea?
-//                ChatUtils.sendMessageToServer("§")
-                delay(delay.seconds)
-                showBan() //is auto disconnect a good idea??
-                isBusy = false
-            }
+    fun onLogin(event: HypixelJoinEvent) {
+        if (!plusSubscription) return
+        if (Random.nextInt(1, 5) > 1) return
+        SkyHanniMod.coroutineScope.launch {
+            isBusy = true
+//             delay(delay + Random.nextInt(-500, 500 // i want to send to limbo to fake a staff ban, but auto limbo is maybe not a good idea?
+//             ChatUtils.sendMessageToServer("§")
+            delay(delay + Random.nextInt(-500, 500))
+            showBan() //is auto disconnect a good idea??
+            isBusy = false
         }
     }
 
@@ -58,8 +57,7 @@ class SkyHanniPlus {
     }
 
     private fun enable() {
-        if (config.disabled) return
-        if (plusSubscription) return
+        if (config.disabled || plusSubscription) return
         plusSubscription = true
     }
 
