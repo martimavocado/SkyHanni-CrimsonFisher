@@ -4,6 +4,7 @@ import at.hannibal2.skyhanni.SkyHanniMod
 import at.hannibal2.skyhanni.events.ConfigLoadEvent
 import at.hannibal2.skyhanni.events.HypixelJoinEvent
 import at.hannibal2.skyhanni.events.LorenzChatEvent
+import at.hannibal2.skyhanni.utils.ChatUtils
 import at.hannibal2.skyhanni.utils.ConditionalUtils.afterChange
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -38,8 +39,8 @@ class SkyHanniPlus {
         if (Random.nextInt(1, 5) > 1) return
         SkyHanniMod.coroutineScope.launch {
             isBusy = true
-//             delay(delay + Random.nextInt(-500, 500 // i want to send to limbo to fake a staff ban, but auto limbo is maybe not a good idea?
-//             ChatUtils.sendMessageToServer("§")
+            delay(delay + Random.nextInt(-500, 500))
+            ChatUtils.sendMessageToServer("§") // i want to send to limbo to fake a staff ban, but auto limbo is maybe not a good idea?
             delay(delay + Random.nextInt(-500, 500))
             showBan() //is auto disconnect a good idea??
             isBusy = false
@@ -57,7 +58,8 @@ class SkyHanniPlus {
     }
 
     private fun enable() {
-        if (config.disabled || plusSubscription) return
+        if (config.disabled) return
+        if (plusSubscription) return
         plusSubscription = true
     }
 
