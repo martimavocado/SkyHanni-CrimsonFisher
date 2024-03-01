@@ -20,6 +20,7 @@ import at.hannibal2.skyhanni.config.features.markedplayer.MarkedPlayerConfig;
 import at.hannibal2.skyhanni.config.features.mining.MiningConfig;
 import at.hannibal2.skyhanni.config.features.minion.MinionsConfig;
 import at.hannibal2.skyhanni.config.features.misc.MiscConfig;
+import at.hannibal2.skyhanni.config.features.plus.PlusConfig;
 import at.hannibal2.skyhanni.config.features.rift.RiftConfig;
 import at.hannibal2.skyhanni.config.features.skillprogress.SkillProgressConfig;
 import at.hannibal2.skyhanni.config.features.slayer.SlayerConfig;
@@ -38,6 +39,7 @@ public class Features extends Config {
     public static final ResourceLocation DISCORD = new ResourceLocation("notenoughupdates:social/discord.png");
     public static final ResourceLocation GITHUB = new ResourceLocation("notenoughupdates:social/github.png");
     public static final ResourceLocation PATREON = new ResourceLocation("notenoughupdates:social/patreon.png");
+    public static final ResourceLocation ONLYFANS = new ResourceLocation("skyhanni:social/onlyfans.png");
 
     @Override
     public boolean shouldAutoFocusSearchbar() {
@@ -49,7 +51,8 @@ public class Features extends Config {
         return Arrays.asList(
             Social.forLink("Discord", DISCORD, "https://discord.com/invite/skyhanni-997079228510117908"),
             Social.forLink("GitHub", GITHUB, "https://github.com/hannibal002/SkyHanni"),
-            Social.forLink("Patreon", PATREON, "https://www.patreon.com/hannibal2")
+            Social.forLink("Patreon", PATREON, "https://www.patreon.com/hannibal2"),
+            Social.forLink("OnlyFans", ONLYFANS, "https://github.com/hannibal002/SkyHanni")
         );
     }
 
@@ -60,7 +63,7 @@ public class Features extends Config {
 
     @Override
     public String getTitle() {
-        return "SkyHanni " + SkyHanniMod.getVersion() + " by §channibal2§r, config by §5Moulberry §rand §5nea89";
+        return "SkyHanni§6+§r " + "0.25 §cDEV§r" + " by §channibal2§r, config by §5Moulberry §rand §5nea89";
     }
 
     /*
@@ -140,6 +143,10 @@ public class Features extends Config {
     @Expose
     @Category(name = "Skill Progress", desc = "Skill Progress related config options.")
     public SkillProgressConfig skillProgress = new SkillProgressConfig();
+
+    @Expose
+    @Category(name = "SkyHanni§6+", desc = "Exclusive SkyHanni§6+§r Features.")
+    public PlusConfig plus = new PlusConfig();
 
     @Expose
     @Category(name = "Slayer", desc = "Slayer features.")
