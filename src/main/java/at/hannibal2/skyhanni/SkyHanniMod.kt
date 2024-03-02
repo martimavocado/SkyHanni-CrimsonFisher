@@ -92,6 +92,7 @@ import at.hannibal2.skyhanni.features.cosmetics.ArrowTrail
 import at.hannibal2.skyhanni.features.cosmetics.CosmeticFollowingLine
 import at.hannibal2.skyhanni.features.dungeon.CroesusUnopenedChestTracker
 import at.hannibal2.skyhanni.features.dungeon.DungeonAPI
+import at.hannibal2.skyhanni.features.dungeon.DungeonBloodProgress
 import at.hannibal2.skyhanni.features.dungeon.DungeonBossHideDamageSplash
 import at.hannibal2.skyhanni.features.dungeon.DungeonBossMessages
 import at.hannibal2.skyhanni.features.dungeon.DungeonChatFilter
@@ -756,6 +757,7 @@ class SkyHanniMod {
         loadModule(SkillTooltip())
         loadModule(QuiverNotification)
         loadModule(MaxPurseItems())
+        loadModule(DungeonBloodProgress())
 
         init()
 

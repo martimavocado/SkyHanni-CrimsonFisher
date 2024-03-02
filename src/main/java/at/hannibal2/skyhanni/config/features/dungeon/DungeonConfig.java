@@ -39,6 +39,11 @@ public class DungeonConfig {
     public CleanEndConfig cleanEnd = new CleanEndConfig();
 
     @Expose
+    @ConfigOption(name = "Blood Progress", desc = "")
+    @Accordion
+    public DungeonBloodProgressConfig bloodProgress = new DungeonBloodProgressConfig();
+
+    @Expose
     @ConfigOption(name = "Boss Damage Splash", desc = "Hides damage splashes while inside the boss room (fixes a Skytils feature).")
     @ConfigEditorBoolean
     @FeatureToggle
