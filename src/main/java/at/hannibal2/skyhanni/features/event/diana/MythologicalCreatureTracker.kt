@@ -102,7 +102,7 @@ object MythologicalCreatureTracker {
             val sinceSuffix = if (config.showSince.get() &&
                 creatureType == MythologicalCreatureType.MINOS_INQUISITOR &&
                 (config.showSinceThreshold.get() <= (sinceInquis ?: 0))) {
-            " §e($sinceInquis since)"
+            " §e($sinceInquis ago)"
             } else ""
             addAsSingletonList(" §7- §e${amount.addSeparators()} ${creatureType.displayName}$percentageSuffix$sinceSuffix")
         }
