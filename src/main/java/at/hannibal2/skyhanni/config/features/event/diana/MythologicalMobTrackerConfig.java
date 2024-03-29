@@ -24,6 +24,11 @@ public class MythologicalMobTrackerConfig {
     public Property<Boolean> showPercentage = Property.of(false);
 
     @Expose
+    @ConfigOption(name = "Show Since", desc = "Shows how many mobs were spawned since the last Inquisitor.")
+    @ConfigEditorBoolean
+    public Property<Boolean> showSince = Property.of(false);
+
+    @Expose
     @ConfigOption(name = "Hide Chat", desc = "Hide the chat messages when digging up a mythological mob.")
     @ConfigEditorBoolean
     public boolean hideChat = false;

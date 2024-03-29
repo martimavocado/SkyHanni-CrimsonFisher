@@ -1,6 +1,7 @@
 package at.hannibal2.skyhanni.features.event.diana
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.data.ProfileStorageData
 import at.hannibal2.skyhanni.events.ConfigLoadEvent
 import at.hannibal2.skyhanni.events.GuiRenderEvent
 import at.hannibal2.skyhanni.events.LorenzChatEvent
@@ -22,6 +23,7 @@ import java.util.regex.Pattern
 object MythologicalCreatureTracker {
 
     private val config get() = SkyHanniMod.feature.event.diana.mythologicalMobtracker
+    private var sinceInquis = ProfileStorageData.profileSpecific?.diana?.spawnsSinceInquisitor
 
     private val patternGroup = RepoPattern.group("event.diana.mythological.tracker")
     private val minotaurPattern by patternGroup.pattern(
@@ -79,6 +81,8 @@ object MythologicalCreatureTracker {
                 BurrowAPI.lastBurrowRelatedChatMessage = SimpleTimeMark.now()
                 tracker.modify { it.count.addOrPut(creatureType, 1) }
 
+                sinceInquis = if (creatureType == MythologicalCreatureType.MINOS_INQUISITOR) { 0
+                } else sinceInquis?.plus(1)
                 if (config.hideChat) {
                     event.blockedReason = "mythological_creature_dug"
                 }
@@ -95,8 +99,10 @@ object MythologicalCreatureTracker {
                 val percentage = LorenzUtils.formatPercentage(amount.toDouble() / total)
                 " §7$percentage"
             } else ""
-
-            addAsSingletonList(" §7- §e${amount.addSeparators()} ${creatureType.displayName}$percentageSuffix")
+            val sinceSuffix = if (config.showSince.get() && creatureType == MythologicalCreatureType.MINOS_INQUISITOR) {
+            " §e($sinceInquis since)"
+            } else ""
+            addAsSingletonList(" §7- §e${amount.addSeparators()} ${creatureType.displayName}$percentageSuffix$sinceSuffix")
         }
         addAsSingletonList(" §7- §e${total.addSeparators()} §7Total Mythological Creatures")
     }

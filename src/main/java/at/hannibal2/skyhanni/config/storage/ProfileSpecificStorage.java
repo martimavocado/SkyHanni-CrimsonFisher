@@ -460,6 +460,9 @@ public class ProfileSpecificStorage {
         @Expose
         // TODO renmae
         public MythologicalCreatureTracker.Data mythologicalMobTracker = new MythologicalCreatureTracker.Data();
+
+        @Expose
+        public int spawnsSinceInquisitor = 0;
     }
 
     @Expose
