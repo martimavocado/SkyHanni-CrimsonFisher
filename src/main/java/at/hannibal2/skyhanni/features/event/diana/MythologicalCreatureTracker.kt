@@ -99,7 +99,9 @@ object MythologicalCreatureTracker {
                 val percentage = LorenzUtils.formatPercentage(amount.toDouble() / total)
                 " §7$percentage"
             } else ""
-            val sinceSuffix = if (config.showSince.get() && creatureType == MythologicalCreatureType.MINOS_INQUISITOR) {
+            val sinceSuffix = if (config.showSince.get() &&
+                creatureType == MythologicalCreatureType.MINOS_INQUISITOR &&
+                (config.showSinceThreshold.get() <= (sinceInquis ?: 0))) {
             " §e($sinceInquis since)"
             } else ""
             addAsSingletonList(" §7- §e${amount.addSeparators()} ${creatureType.displayName}$percentageSuffix$sinceSuffix")
@@ -113,6 +115,9 @@ object MythologicalCreatureTracker {
             tracker.update()
         }
         ConditionalUtils.onToggle(config.showSince) {
+            tracker.update()
+        }
+        ConditionalUtils.onToggle(config.showSinceThreshold) {
             tracker.update()
         }
     }

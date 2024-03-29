@@ -112,8 +112,14 @@ object SeaCreatureTracker {
             } else ""
             val sinceSuffix = if (config.showSince.get()) {
                 when (name) {
-                    "Thunder" -> " §e(${storage?.spawnsSinceThunder} since)"
-                    "Lord Jawbus" -> " §e(${storage?.spawnsSinceJawbus} since)"
+                    "Thunder" -> {
+                        if (config.showSinceThreshold.get() <= (storage?.spawnsSinceThunder ?: 0)) " §e(${storage?.spawnsSinceThunder} since)"
+                        else ""
+                    }
+                    "Lord Jawbus" -> {
+                        if (config.showSinceThreshold.get() <= (storage?.spawnsSinceJawbus ?: 0)) " §e(${storage?.spawnsSinceJawbus} since)"
+                        else ""
+                    }
                     else -> ""
                 }
             } else ""
@@ -165,6 +171,9 @@ object SeaCreatureTracker {
             tracker.update()
         }
         ConditionalUtils.onToggle(config.showSince) {
+            tracker.update()
+        }
+        ConditionalUtils.onToggle(config.showSinceThreshold) {
             tracker.update()
         }
     }
