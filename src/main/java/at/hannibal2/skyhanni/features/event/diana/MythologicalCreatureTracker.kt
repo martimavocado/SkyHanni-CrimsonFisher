@@ -112,6 +112,9 @@ object MythologicalCreatureTracker {
         ConditionalUtils.onToggle(config.showPercentage) {
             tracker.update()
         }
+        ConditionalUtils.onToggle(config.showSince) {
+            tracker.update()
+        }
     }
 
     @SubscribeEvent
