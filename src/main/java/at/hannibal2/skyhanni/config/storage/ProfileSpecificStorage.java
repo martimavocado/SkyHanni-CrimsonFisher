@@ -446,6 +446,12 @@ public class ProfileSpecificStorage {
         @Expose
         public SeaCreatureTracker.Data seaCreatureTracker = new SeaCreatureTracker.Data();
 
+        @Expose
+        public int spawnsSinceThunder = 0;
+
+        @Expose
+        public int spawnsSinceJawbus = 0;
+
     }
 
     @Expose

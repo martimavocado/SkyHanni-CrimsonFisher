@@ -1,6 +1,7 @@
 package at.hannibal2.skyhanni.features.fishing.tracker
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.data.ProfileStorageData
 import at.hannibal2.skyhanni.events.ConfigLoadEvent
 import at.hannibal2.skyhanni.events.FishingBobberCastEvent
 import at.hannibal2.skyhanni.events.GuiRenderEvent
@@ -31,6 +32,7 @@ import kotlin.time.Duration.Companion.seconds
 object SeaCreatureTracker {
 
     private val config get() = SkyHanniMod.feature.fishing.seaCreatureTracker
+    private val storage get() = ProfileStorageData.profileSpecific?.fishing
 
     private val trophyArmorNames by RepoPattern.pattern(
         "fishing.trophyfishing.armor",
@@ -60,6 +62,10 @@ object SeaCreatureTracker {
             val amount = if (event.doubleHook && config.countDouble) 2 else 1
             it.amount.addOrPut(event.seaCreature.name, amount)
         }
+        storage?.spawnsSinceThunder = if (event.seaCreature.name == "Thunder") 0
+        else storage?.spawnsSinceThunder?.plus(1) ?: 1
+        storage?.spawnsSinceJawbus = if (event.seaCreature.name == "Magma Slug") 0
+        else storage?.spawnsSinceJawbus?.plus(1) ?: 1
 
         if (config.hideChat) {
             event.chatEvent.blockedReason = "sea_creature_tracker"
@@ -104,8 +110,14 @@ object SeaCreatureTracker {
                 val percentage = LorenzUtils.formatPercentage(amount.toDouble() / total)
                 " §7$percentage"
             } else ""
-
-            addAsSingletonList(" §7- §e${amount.addSeparators()} $displayName$percentageSuffix")
+            val sinceSuffix = if (config.showSince.get()) {
+                when (name) {
+                    "Thunder" -> " §e(${storage?.spawnsSinceThunder} since)"
+                    "Lord Jawbus" -> " §e(${storage?.spawnsSinceJawbus} since)"
+                    else -> ""
+                }
+            } else ""
+            addAsSingletonList(" §7- §e${amount.addSeparators()} $displayName$percentageSuffix$sinceSuffix")
         }
         addAsSingletonList(" §7- §e${total.addSeparators()} §7Total Sea Creatures")
     }
