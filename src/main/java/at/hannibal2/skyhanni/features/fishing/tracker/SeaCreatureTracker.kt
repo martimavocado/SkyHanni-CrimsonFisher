@@ -8,6 +8,7 @@ import at.hannibal2.skyhanni.events.GuiRenderEvent
 import at.hannibal2.skyhanni.events.LorenzTickEvent
 import at.hannibal2.skyhanni.events.SeaCreatureFishEvent
 import at.hannibal2.skyhanni.features.fishing.FishingAPI
+import at.hannibal2.skyhanni.features.fishing.SeaCreature
 import at.hannibal2.skyhanni.features.fishing.SeaCreatureManager
 import at.hannibal2.skyhanni.test.command.ErrorManager
 import at.hannibal2.skyhanni.utils.CollectionUtils.addAsSingletonList
@@ -32,7 +33,7 @@ import kotlin.time.Duration.Companion.seconds
 object SeaCreatureTracker {
 
     private val config get() = SkyHanniMod.feature.fishing.seaCreatureTracker
-    private val storage get() = ProfileStorageData.profileSpecific?.fishing
+    private val storage get() = ProfileStorageData.profileSpecific?.fishing?.spawnsSince
 
     private val trophyArmorNames by RepoPattern.pattern(
         "fishing.trophyfishing.armor",
@@ -62,10 +63,11 @@ object SeaCreatureTracker {
             val amount = if (event.doubleHook && config.countDouble) 2 else 1
             it.amount.addOrPut(event.seaCreature.name, amount)
         }
-        storage?.spawnsSinceThunder = if (event.seaCreature.name == "Thunder") 0
-        else storage?.spawnsSinceThunder?.plus(1) ?: 1
-        storage?.spawnsSinceJawbus = if (event.seaCreature.name == "Magma Slug") 0
-        else storage?.spawnsSinceJawbus?.plus(1) ?: 1
+        calculateSinceCreature(event.seaCreature)
+//        storage?.spawnsSinceThunder = if (event.seaCreature.name == "Thunder") 0
+//        else storage?.spawnsSinceThunder?.plus(1) ?: 1
+//        storage?.spawnsSinceJawbus = if (event.seaCreature.name == "Magma Slug") 0
+//        else storage?.spawnsSinceJawbus?.plus(1) ?: 1
 
         if (config.hideChat) {
             event.chatEvent.blockedReason = "sea_creature_tracker"
@@ -110,19 +112,7 @@ object SeaCreatureTracker {
                 val percentage = LorenzUtils.formatPercentage(amount.toDouble() / total)
                 " §7$percentage"
             } else ""
-            val sinceSuffix = if (config.showSince.get()) {
-                when (name) {
-                    "Thunder" -> {
-                        if (config.showSinceThreshold.get() <= (storage?.spawnsSinceThunder ?: 0)) " §e(${storage?.spawnsSinceThunder} since)"
-                        else ""
-                    }
-                    "Lord Jawbus" -> {
-                        if (config.showSinceThreshold.get() <= (storage?.spawnsSinceJawbus ?: 0)) " §e(${storage?.spawnsSinceJawbus} since)"
-                        else ""
-                    }
-                    else -> ""
-                }
-            } else ""
+            val sinceSuffix = if (config.showSince.get()) createSinceSuffix(name) else ""
             addAsSingletonList(" §7- §e${amount.addSeparators()} $displayName$percentageSuffix$sinceSuffix")
         }
         addAsSingletonList(" §7- §e${total.addSeparators()} §7Total Sea Creatures")
@@ -206,5 +196,23 @@ object SeaCreatureTracker {
         if (lastArmorCheck.passedSince() < 3.seconds) return
         lastArmorCheck = SimpleTimeMark.now()
         isTrophyFishing = isWearingTrophyArmor()
+    }
+
+    private fun createSinceSuffix(name: String): String {
+        if (storage?.containsKey(name) == false) return ""
+        return if (config.showSinceThreshold.get() > (storage?.get(name) ?: 0)) ""
+        else " §e(${storage?.get(name)} ago)"
+    }
+
+    private fun calculateSinceCreature(input: SeaCreature) {
+        val name = input.name
+        if (name == "Magma Slug" || input.rare) {
+            storage?.set(name, 0)
+        }
+        storage?.forEach{ (key, value) ->
+            if (key != name) {
+                storage?.set(key, value+1)
+            }
+        }
     }
 }

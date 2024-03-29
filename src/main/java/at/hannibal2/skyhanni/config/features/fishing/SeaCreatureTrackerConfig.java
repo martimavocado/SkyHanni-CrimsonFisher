@@ -25,7 +25,7 @@ public class SeaCreatureTrackerConfig {
     public Property<Boolean> showPercentage = Property.of(false);
 
     @Expose
-    @ConfigOption(name = "Show Since", desc = "Shows how many mobs were caught since the last one." + "\nOnly applies to Lord Jawbus and Thunder.")
+    @ConfigOption(name = "Show Since", desc = "Shows how many mobs were caught since the last one." + "\nOnly applies to rare Sea Creatures.")
     @ConfigEditorBoolean
     public Property<Boolean> showSince = Property.of(false);
 
