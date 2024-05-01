@@ -74,7 +74,7 @@ object ChocolateFactoryStats {
             put(ChocolateFactoryStat.EMPTY_2, "")
             put(ChocolateFactoryStat.EMPTY_3, "")
 
-            put(ChocolateFactoryStat.TIME_TOWER, "§eTime Tower: §6$timeTowerInfo")
+            if (!timeTowerInfo.startsWith("§6-1")) put(ChocolateFactoryStat.TIME_TOWER, "§eTime Tower: §6$timeTowerInfo")
             put(ChocolateFactoryStat.TIME_TO_PRESTIGE, "§eTime To Prestige: $prestigeEstimate")
             put(
                 ChocolateFactoryStat.RAW_PER_SECOND,
