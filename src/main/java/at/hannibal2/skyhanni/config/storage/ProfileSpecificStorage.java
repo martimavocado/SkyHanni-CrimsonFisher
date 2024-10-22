@@ -4,6 +4,7 @@ import at.hannibal2.skyhanni.api.HotmAPI;
 import at.hannibal2.skyhanni.api.SkillAPI;
 import at.hannibal2.skyhanni.data.IslandType;
 import at.hannibal2.skyhanni.data.MaxwellAPI;
+import at.hannibal2.skyhanni.data.PetData;
 import at.hannibal2.skyhanni.data.jsonobjects.local.HotmTree;
 import at.hannibal2.skyhanni.data.model.ComposterUpgrade;
 import at.hannibal2.skyhanni.data.model.SkyblockStat;
@@ -67,6 +68,9 @@ public class ProfileSpecificStorage {
 
     @Expose
     public String currentPet = "";
+
+    @Expose
+    public PetData newCurrentPet = null;
 
     @Expose
     public ExperimentationStorage experimentation = new ExperimentationStorage();
