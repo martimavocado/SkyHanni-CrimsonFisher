@@ -58,8 +58,8 @@ object PetAPI {
         if (!petMenuPattern.matches(inventoryTitle)) return false
 
         // Checks if the menu is not the Pets submenu in the forge
-        val goBackLore = inventoryItems[48]?.getLore().orEmpty()
-        return !goBackLore.any { forgeBackMenuPattern.matches(it) }
+        val isForgeMenu = inventoryItems[48]?.getLore().orEmpty().any { forgeBackMenuPattern.matches(it) }
+        return !isForgeMenu
     }
 
     // goes unused and might be unfinished, will replace currentPet when ready
