@@ -100,8 +100,7 @@ object TheGreatSpook {
             "§5Time left: ${
                 greatSpookEnd.timeUntil().format(
                     biggestUnit = TimeUnit.DAY,
-                    showMilliSeconds = false,
-                    showSmallerUnits = false,
+                    maxUnits = 2,
                 )
             }"
         } else {
