@@ -79,7 +79,7 @@ object TheGreatSpook {
         val fear = SkyblockStat.FEAR.lastKnownValue ?: 0.0
         val mobCooldown = timeUntilNextMob.minus((3 * fear).seconds)
         val mobCooldownString = if (mobCooldown.isInFuture()) {
-            "§5Next fear in: ${
+            "§5Next fear in: §b${
                 mobCooldown.timeUntil().format(
                     biggestUnit = TimeUnit.MINUTE,
                     showMilliSeconds = false,
@@ -97,7 +97,7 @@ object TheGreatSpook {
 
         val greatSpookEnd = greatSpookTimeRange?.endInclusive ?: return
         val timeLeftString = if (greatSpookEnd.isInFuture()) {
-            "§5Time left: ${
+            "§5Great Spook time left: §b${
                 greatSpookEnd.timeUntil().format(
                     biggestUnit = TimeUnit.DAY,
                     maxUnits = 2,
