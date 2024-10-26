@@ -163,7 +163,7 @@ public class DebugConfig {
     public boolean alwaysHoppitys = false;
 
     @Expose
-    @ConfigOption(name = "Always Great Spook", desc = "Assumes the Great Spook is active.")
+    @ConfigOption(name = "Always Great Spook", desc = "Assumes the Great Spook is always active.")
     @ConfigEditorBoolean
     public Property<Boolean> forceGreatSpook = Property.of(false);
 
