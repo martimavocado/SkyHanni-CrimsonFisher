@@ -49,6 +49,8 @@ object BasketWaypoints {
         "main.scoreboard.basket",
         "^Baskets Found: §a\\d+§f/§a\\d+\$"
     )
+
+    @Suppress("MaxLineLength")
     private val basketPattern by patternGroup.pattern(
         "basket",
         "^((?:§.)+You found a Candy Basket! (?:(?:§.)+\\((?:§.)+(?<current>\\d+)(?:§.)+/(?:§.)+(?<max>\\d+)(?:§.)+\\))?|(?:§.)+You already found this Candy Basket!)\$"
@@ -113,6 +115,10 @@ object BasketWaypoints {
 
     @SubscribeEvent
     fun onScoreboardChange(event: ScoreboardUpdateEvent) {
+        if (LorenzUtils.inSkyBlock) {
+            isActive = false
+            return
+        }
         var titleMatches = false
         var halloweenMatches = false
         var basketMatches = false
@@ -162,7 +168,9 @@ object BasketWaypoints {
     }
 
     private fun getClosest(nodeList: List<GraphNode>? = null): EventWaypoint? {
-        val nodes = nodeList ?: IslandGraphs.currentIslandGraph?.nodes?.filter { GraphNodeTag.HALLOWEEN_BASKET in it.tags }.orEmpty()
+        val nodes = nodeList ?: IslandGraphs.currentIslandGraph?.nodes?.filter {
+            GraphNodeTag.HALLOWEEN_BASKET in it.tags
+        }.orEmpty()
 
         val unFoundBaskets = basketList.filter { !it.isFound }.map { it.position }
         val unFoundNodes = nodes.filter { it.position in unFoundBaskets }
