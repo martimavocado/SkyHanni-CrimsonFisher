@@ -176,6 +176,10 @@ object IslandGraphs {
         }
     }
 
+    fun loadLobby(lobby: String) {
+        reloadFromJson(lobby)
+    }
+
     private fun loadDwarvenMines() {
         if (isGlaciteTunnelsArea(LorenzUtils.skyBlockArea)) {
             reloadFromJson("GLACITE_TUNNELS")

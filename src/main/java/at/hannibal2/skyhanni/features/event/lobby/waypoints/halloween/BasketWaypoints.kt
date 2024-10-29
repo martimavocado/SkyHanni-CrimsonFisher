@@ -24,7 +24,7 @@ object BasketWaypoints {
 
     @SubscribeEvent
     fun onChat(event: LorenzChatEvent) {
-        if (!config.allWaypoints && !config.allEntranceWaypoints) return
+        if (!config.allWaypoints) return
         if (!isHalloween) return
 
         if (!isEnabled()) return
@@ -41,7 +41,7 @@ object BasketWaypoints {
 
     @SubscribeEvent
     fun onSecondPassed(event: SecondPassedEvent) {
-        if (!config.allWaypoints && !config.allEntranceWaypoints) return
+        if (!config.allWaypoints) return
         if (!isEnabled()) return
 
         isHalloween = checkScoreboardHalloweenSpecific()
@@ -68,15 +68,6 @@ object BasketWaypoints {
                 event.drawWaypointFilled(basket.waypoint, LorenzColor.GOLD.toColor())
                 event.drawDynamicText(basket.waypoint, "§6" + basket.basketName, 1.5)
             }
-        }
-
-        if (config.allEntranceWaypoints) {
-            for (basketEntrance in BasketEntrance.entries) {
-                if (!basketEntrance.basket.any { it.shouldShow() }) continue
-                event.drawWaypointFilled(basketEntrance.waypoint, LorenzColor.YELLOW.toColor())
-                event.drawDynamicText(basketEntrance.waypoint, "§e" + basketEntrance.basketEntranceName, 1.5)
-            }
-            return
         }
     }
 
