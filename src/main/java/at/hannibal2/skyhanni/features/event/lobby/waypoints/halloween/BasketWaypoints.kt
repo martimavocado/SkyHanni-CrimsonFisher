@@ -11,6 +11,7 @@ import at.hannibal2.skyhanni.events.ConfigLoadEvent
 import at.hannibal2.skyhanni.events.LorenzChatEvent
 import at.hannibal2.skyhanni.events.LorenzRenderWorldEvent
 import at.hannibal2.skyhanni.events.ScoreboardUpdateEvent
+import at.hannibal2.skyhanni.events.SecondPassedEvent
 import at.hannibal2.skyhanni.features.event.lobby.waypoints.EventWaypoint
 import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
 import at.hannibal2.skyhanni.utils.ChatUtils
@@ -52,13 +53,33 @@ object BasketWaypoints {
         "basket",
         "^((?:§.)+You found a Candy Basket! (?:(?:§.)+\\((?:§.)+(?<current>\\d+)(?:§.)+/(?:§.)+(?<max>\\d+)(?:§.)+\\))?|(?:§.)+You already found this Candy Basket!)\$"
     )
+    private val basketAllFoundPattern by patternGroup.pattern(
+        "basket.allfound",
+        "^§a§lCongratulations! You found all Candy Baskets!$"
+    )
 
+    @SubscribeEvent
+    fun onSecondPassed(event: SecondPassedEvent) {
+        if (!event.repeatSeconds(2)) return
+        if (!isActive || !isEnabled()) return
+
+        val newClosest = getClosest()
+        if (newClosest == closestBasket) return
+
+        closestBasket = newClosest
+        if (config.pathfind.get()) startPathfind()
+    }
 
     @SubscribeEvent
     fun onChat(event: LorenzChatEvent) {
         if (!config.allWaypoints) return
         if (!isActive) return
         if (!isEnabled()) return
+
+        if (basketAllFoundPattern.matches(event.message)) {
+            disableFeature()
+            return
+        }
 
         if (!basketPattern.matches(event.message)) return
         basketList.minByOrNull { it.position.distanceSqToPlayer() }?.isFound = true
@@ -109,7 +130,6 @@ object BasketWaypoints {
 
         val newIsActive = titleMatches && halloweenMatches && basketMatches
         if (isActive != newIsActive && newIsActive) {
-            ChatUtils.chat("loading graph")
             IslandGraphs.loadLobby("MAIN_LOBBY")
 
             val nodeList = IslandGraphs.currentIslandGraph?.nodes?.filter { GraphNodeTag.HALLOWEEN_BASKET in it.tags }.orEmpty()
@@ -137,7 +157,7 @@ object BasketWaypoints {
             basket.position,
             "",
             LorenzColor.LIGHT_PURPLE.toColor(),
-            condition = { config.pathfind.get() && closestBasket != null }
+            condition = { config.pathfind.get() && closestBasket != null && config.allWaypoints }
         )
     }
 
