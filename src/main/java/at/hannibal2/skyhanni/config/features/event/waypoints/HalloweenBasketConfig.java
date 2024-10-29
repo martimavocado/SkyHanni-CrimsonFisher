@@ -9,7 +9,7 @@ import io.github.notenoughupdates.moulconfig.observer.Property;
 public class HalloweenBasketConfig {
 
     @Expose
-    @ConfigOption(name = "Basket Waypoints", desc = "Show all Halloween Basket waypoints.\n" +
+    @ConfigOption(name = "Enabled", desc = "Show all Halloween Basket waypoints.\n" +
         "§eCoordinates may not always be up to date!")
     @ConfigEditorBoolean
     @FeatureToggle

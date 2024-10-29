@@ -69,7 +69,7 @@ object BasketWaypoints {
         if (newClosest == closestBasket) return
 
         closestBasket = newClosest
-        if (config.pathfind.get()) startPathfind()
+        if (config.pathfind.get() && config.allWaypoints) startPathfind()
     }
 
     @SubscribeEvent
@@ -144,7 +144,7 @@ object BasketWaypoints {
                 basketList.add(EventWaypoint(position = node.position, isFound = false))
             }
             closestBasket = getClosest(nodeList)
-            startPathfind()
+            if (config.pathfind.get() && config.allWaypoints) startPathfind()
         }
         isActive = newIsActive
     }
