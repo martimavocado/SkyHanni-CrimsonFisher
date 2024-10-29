@@ -9,6 +9,7 @@ enum class GraphNodeTag(
     val cleanName: String,
     val description: String,
     val onlyIsland: IslandType? = null,
+    val onlySkyblock: Boolean = true
 ) {
     DEV("dev", LorenzColor.WHITE, "Dev", "Intentionally marked as dev."), // E.g. Spawn points, todos, etc
 
@@ -85,6 +86,14 @@ enum class GraphNodeTag(
     // The End
     END_GOLEM("end_golem", LorenzColor.RED, "Golem Spawn", "A spot where the golem can spawn in the End.", onlyIsland = IslandType.THE_END),
 
+    // lobby event waypoints
+    HALLOWEEN_BASKET(
+        "event_basket",
+        LorenzColor.LIGHT_PURPLE,
+        "Basket",
+        "A Basket during the Halloween Event.",
+        onlySkyblock = false,
+    ),
     ;
 
     val displayName: String = color.getChatColor() + cleanName

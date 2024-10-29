@@ -152,9 +152,14 @@ object GraphNodeEditor {
         )
     }
 
-    private fun checkIsland(tag: GraphNodeTag): Boolean = tag.onlyIsland?.let {
-        it == LorenzUtils.skyBlockIsland
-    } ?: true
+    private fun checkIsland(tag: GraphNodeTag): Boolean {
+        val islandMatches = tag.onlyIsland?.let {
+            it == LorenzUtils.skyBlockIsland
+        } ?: true
+        val skyblockMatches = tag.onlySkyblock == LorenzUtils.inSkyBlock
+
+        return islandMatches && skyblockMatches
+    }
 
     private fun createTagName(
         name: String,
