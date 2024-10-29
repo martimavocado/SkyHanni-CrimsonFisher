@@ -156,7 +156,9 @@ object GraphNodeEditor {
         val islandMatches = tag.onlyIsland?.let {
             it == LorenzUtils.skyBlockIsland
         } ?: true
-        val skyblockMatches = tag.onlySkyblock == LorenzUtils.inSkyBlock
+        val skyblockMatches = tag.onlySkyblock?.let {
+            it == LorenzUtils.inSkyBlock
+        } ?: true
 
         return islandMatches && skyblockMatches
     }
