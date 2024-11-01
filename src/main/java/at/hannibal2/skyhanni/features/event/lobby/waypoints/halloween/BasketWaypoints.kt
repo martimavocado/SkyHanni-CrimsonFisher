@@ -37,6 +37,7 @@ object BasketWaypoints {
 
     private val patternGroup = RepoPattern.group("event.lobbywaypoints")
 
+    // TODO add regex tests
     private val scoreboardTitlePattern by patternGroup.pattern(
         "main.scoreboard.title",
         "^HYPIXEL$"
@@ -161,7 +162,7 @@ object BasketWaypoints {
 
         IslandGraphs.pathFind(
             basket.position,
-            "",
+            "§dNext Basket",
             LorenzColor.LIGHT_PURPLE.toColor(),
             condition = { config.pathfind.get() && closestBasket != null && config.allWaypoints }
         )
