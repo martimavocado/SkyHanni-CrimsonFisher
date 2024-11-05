@@ -197,9 +197,9 @@ object DungeonLividFinder {
             add("inBoss: ${inLividBossRoom()}")
             add("isBlind: $isBlind")
             add("blockColor: ${blockLocation.getBlockStateAt()}")
-            add("livid: ${livid?.name}")
-            add("color: ${color?.name}")
+            add("livid: '${livid?.armorStand?.name}'")
             add("lividArmorStandID: $lividArmorStandId")
+            add("color: ${color?.name}")
         }
     }
 }
