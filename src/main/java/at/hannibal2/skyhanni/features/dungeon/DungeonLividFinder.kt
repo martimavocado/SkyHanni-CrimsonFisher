@@ -66,7 +66,6 @@ object DungeonLividFinder {
         val lividColor = color
         val isCorrectLivid = if (lividColor == null) false else mob.isLividColor(lividColor)
 
-        println("Livid: ${mob.armorStand?.name}§7 | $isCorrectLivid")
         if (lividColor == null) {
             fakeLivids += mob
             return
