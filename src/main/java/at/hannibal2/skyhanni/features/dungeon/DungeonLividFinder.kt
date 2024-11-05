@@ -6,6 +6,7 @@ import at.hannibal2.skyhanni.data.mob.Mob
 import at.hannibal2.skyhanni.events.CheckRenderEntityEvent
 import at.hannibal2.skyhanni.events.DebugDataCollectEvent
 import at.hannibal2.skyhanni.events.DungeonBossRoomEnterEvent
+import at.hannibal2.skyhanni.events.DungeonCompleteEvent
 import at.hannibal2.skyhanni.events.LorenzRenderWorldEvent
 import at.hannibal2.skyhanni.events.LorenzWorldChangeEvent
 import at.hannibal2.skyhanni.events.MobEvent
@@ -26,7 +27,6 @@ import at.hannibal2.skyhanni.utils.RenderUtils.drawFilledBoundingBoxNea
 import at.hannibal2.skyhanni.utils.RenderUtils.drawLineToEye
 import at.hannibal2.skyhanni.utils.RenderUtils.exactBoundingBox
 import at.hannibal2.skyhanni.utils.RenderUtils.exactLocation
-import at.hannibal2.skyhanni.utils.SimpleTimeMark
 import at.hannibal2.skyhanni.utils.TimeUtils.ticks
 import at.hannibal2.skyhanni.utils.compat.EffectsCompat
 import at.hannibal2.skyhanni.utils.compat.EffectsCompat.Companion.activePotionEffect
@@ -36,7 +36,6 @@ import net.minecraft.client.entity.EntityOtherPlayerMP
 import net.minecraft.entity.Entity
 import net.minecraft.init.Blocks
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import kotlin.time.Duration.Companion.seconds
 
 @SkyHanniModule
 object DungeonLividFinder {
@@ -56,7 +55,6 @@ object DungeonLividFinder {
     private var fakeLivids = mutableSetOf<Mob>()
 
     private var color: LorenzColor? = null
-    private var timeSinceBossEnter = SimpleTimeMark.farPast()
 
     @SubscribeEvent
     fun onMobSpawn(event: MobEvent.Spawn.SkyblockMob) {
@@ -68,7 +66,7 @@ object DungeonLividFinder {
         val lividColor = color
         val isCorrectLivid = if (lividColor == null) false else mob.isLividColor(lividColor)
 
-        println("Livid: ${mob.name} | $isCorrectLivid")
+        println("Livid: ${mob.armorStand?.name}§7 | $isCorrectLivid")
         if (lividColor == null) {
             fakeLivids += mob
             return
@@ -90,22 +88,45 @@ object DungeonLividFinder {
         if (!inLividBossRoom()) return
         if (event.location != blockLocation) return
         if (event.location.getBlockAt() != Blocks.wool) return
-        if (timeSinceBossEnter.passedSince() < 2.seconds) return
 
         val newColor = event.newState.getValue(BlockStainedGlass.COLOR).toLorenzColor()
         color = newColor
         ChatUtils.debug("newColor! $newColor")
 
         for (mob in fakeLivids) {
+            if (mob.isLividColor(LorenzColor.RED) && newColor != LorenzColor.RED) {
+                if (mob == livid) {
+                    livid = null
+                    lividArmorStandId = null
+                }
+                mob.highlight(null)
+                fakeLivids += mob
+                continue
+            }
+
             if (mob.isLividColor(newColor)) {
                 livid = mob
                 lividArmorStandId = mob.armorStand?.entityId
                 ChatUtils.debug("Livid found: ${newColor}§7 | $lividArmorStandId")
                 if (config.enabled) mob.highlight(newColor.toColor())
                 fakeLivids -= mob
-                break
+                continue
             }
         }
+    }
+
+    @HandleEvent
+    fun onBossStart(event: DungeonBossRoomEnterEvent) {
+        if (DungeonAPI.getCurrentBoss() != DungeonFloor.F5) return
+        color = LorenzColor.RED
+    }
+
+    @SubscribeEvent
+    fun onBossEnd(event: DungeonCompleteEvent) {
+        color = null
+        livid = null
+        lividArmorStandId = null
+        fakeLivids.clear()
     }
 
     @SubscribeEvent
@@ -158,14 +179,6 @@ object DungeonLividFinder {
     }
 
     private fun inLividBossRoom() = DungeonAPI.inBossRoom && DungeonAPI.getCurrentBoss() == DungeonFloor.F5
-
-    @HandleEvent
-    fun onEnterBoss(event: DungeonBossRoomEnterEvent) {
-        if (DungeonAPI.getCurrentBoss() != DungeonFloor.F5) return
-
-        ChatUtils.debug("started livid")
-        timeSinceBossEnter = SimpleTimeMark.now()
-    }
 
     @SubscribeEvent
     fun onDebug(event: DebugDataCollectEvent) {
