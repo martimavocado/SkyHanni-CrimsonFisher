@@ -77,7 +77,7 @@ object DungeonLividFinder {
             // When the real livid dies at the same time as a fake livid, Hypixel despawns the player entity,
             // and makes it impossible to get the mob of the real livid again.
 
-            ChatUtils.debug("Livid found: ${lividColor}§7 | $lividArmorStandId")
+            ChatUtils.debug("Livid found: $lividColor§7 | $lividArmorStandId")
             if (config.enabled) mob.highlight(lividColor.toColor())
         } else fakeLivids += mob
     }
@@ -109,7 +109,7 @@ object DungeonLividFinder {
             if (mob.isLividColor(newColor)) {
                 livid = mob
                 lividArmorStandId = mob.armorStand?.entityId
-                ChatUtils.debug("Livid found: ${newColor}§7 | $lividArmorStandId")
+                ChatUtils.debug("Livid found: $newColor§7 | $lividArmorStandId")
                 if (config.enabled) mob.highlight(newColor.toColor())
                 fakeLivids -= mob
                 continue
