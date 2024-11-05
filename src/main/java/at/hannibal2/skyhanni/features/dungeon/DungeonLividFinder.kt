@@ -92,7 +92,10 @@ object DungeonLividFinder {
         color = newColor
         ChatUtils.debug("newColor! $newColor")
 
-        for (mob in fakeLivids) {
+        val lividSet = fakeLivids + livid
+
+        for (mob in lividSet) {
+            if (mob == null) continue
             if (mob.isLividColor(LorenzColor.RED) && newColor != LorenzColor.RED) {
                 if (mob == livid) {
                     livid = null
