@@ -33,7 +33,6 @@ import at.hannibal2.skyhanni.utils.compat.EffectsCompat.Companion.activePotionEf
 import net.minecraft.block.BlockStainedGlass
 import net.minecraft.client.Minecraft
 import net.minecraft.client.entity.EntityOtherPlayerMP
-import net.minecraft.entity.Entity
 import net.minecraft.init.Blocks
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
@@ -49,9 +48,6 @@ object DungeonLividFinder {
         private set
     private var lividArmorStandId: Int? = null
 
-    val lividEntityOrArmorstand: Entity?
-        get() = livid?.baseEntity ?: lividArmorStandId?.let { EntityUtils.getEntityByID(it) }
-
     private var fakeLivids = mutableSetOf<Mob>()
 
     private var color: LorenzColor? = null
@@ -63,23 +59,18 @@ object DungeonLividFinder {
         if (mob.name != "Livid" && mob.name != "Real Livid") return
         if (mob.baseEntity !is EntityOtherPlayerMP) return
 
-        val lividColor = color
-        val isCorrectLivid = if (lividColor == null) false else mob.isLividColor(lividColor)
-
-        if (lividColor == null) {
+        val lividColor = color ?: run {
             fakeLivids += mob
             return
         }
 
-        if (isCorrectLivid) {
-            livid = mob
-            lividArmorStandId = mob.armorStand?.entityId
-            // When the real livid dies at the same time as a fake livid, Hypixel despawns the player entity,
-            // and makes it impossible to get the mob of the real livid again.
+        livid = mob
+        lividArmorStandId = mob.armorStand?.entityId
+        // When the real livid dies at the same time as a fake livid, Hypixel despawns the player entity,
+        // and makes it impossible to get the mob of the real livid again.
 
-            ChatUtils.debug("Livid found: $lividColor§7 | $lividArmorStandId")
-            if (config.enabled) mob.highlight(lividColor.toColor())
-        } else fakeLivids += mob
+        ChatUtils.debug("Livid found: $lividColor§7 | $lividArmorStandId")
+        if (config.enabled) mob.highlight(lividColor.toColor())
     }
 
     @SubscribeEvent
@@ -164,7 +155,7 @@ object DungeonLividFinder {
         if (!inLividBossRoom() || !config.enabled) return
         if (isBlind) return
 
-        val entity = lividEntityOrArmorstand ?: return
+        val entity = getLividEntityOrArmorStand() ?: return
         val lorenzColor = color ?: return
 
         val location = event.exactLocation(entity)
@@ -180,11 +171,13 @@ object DungeonLividFinder {
         }
     }
 
+    private fun getLividEntityOrArmorStand() = livid?.baseEntity ?: lividArmorStandId?.let { EntityUtils.getEntityByID(it) }
+
     private fun inLividBossRoom() = DungeonAPI.inBossRoom && DungeonAPI.getCurrentBoss() == DungeonFloor.F5
 
     @SubscribeEvent
     fun onDebug(event: DebugDataCollectEvent) {
-        event.title("Livid Finder")
+        event.title("Dungeon Livid Finder")
 
         if (!inLividBossRoom()) {
             event.addIrrelevant {
@@ -196,7 +189,7 @@ object DungeonLividFinder {
         }
 
         event.addData {
-            add("inBoss: ${inLividBossRoom()}")
+            add("In Livid Boss")
             add("isBlind: $isBlind")
             add("blockColor: ${blockLocation.getBlockStateAt()}")
             add("livid: '${livid?.armorStand?.name}'")
