@@ -4,6 +4,7 @@ import at.hannibal2.skyhanni.SkyHanniMod
 import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.data.mob.Mob
 import at.hannibal2.skyhanni.events.CheckRenderEntityEvent
+import at.hannibal2.skyhanni.events.ConfigLoadEvent
 import at.hannibal2.skyhanni.events.DebugDataCollectEvent
 import at.hannibal2.skyhanni.events.DungeonBossRoomEnterEvent
 import at.hannibal2.skyhanni.events.DungeonCompleteEvent
@@ -15,6 +16,7 @@ import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
 import at.hannibal2.skyhanni.utils.BlockUtils.getBlockAt
 import at.hannibal2.skyhanni.utils.BlockUtils.getBlockStateAt
 import at.hannibal2.skyhanni.utils.ChatUtils
+import at.hannibal2.skyhanni.utils.ConditionalUtils.onToggle
 import at.hannibal2.skyhanni.utils.EntityUtils
 import at.hannibal2.skyhanni.utils.LocationUtils.distanceSqToPlayer
 import at.hannibal2.skyhanni.utils.LorenzColor
@@ -78,8 +80,25 @@ object DungeonLividFinder {
             // and makes it impossible to get the mob of the real livid again.
 
             ChatUtils.debug("Livid found: $lividColor§7 | $lividArmorStandId")
-            if (config.enabled) mob.highlight(lividColor.toColor())
+            if (config.enabled.get()) mob.highlight(lividColor.toColor())
         } else fakeLivids += mob
+    }
+
+    @SubscribeEvent
+    fun onConfigLoad(event: ConfigLoadEvent) {
+        config.enabled.onToggle {
+            reloadHighlight()
+        }
+    }
+
+    private fun reloadHighlight() {
+        val enabled = config.enabled.get()
+
+        if (enabled) {
+            livid?.highlight(color?.toColor())
+        } else {
+            livid?.highlight(null)
+        }
     }
 
     @SubscribeEvent
@@ -110,7 +129,7 @@ object DungeonLividFinder {
                 livid = mob
                 lividArmorStandId = mob.armorStand?.entityId
                 ChatUtils.debug("Livid found: $newColor§7 | $lividArmorStandId")
-                if (config.enabled) mob.highlight(newColor.toColor())
+                if (config.enabled.get()) mob.highlight(newColor.toColor())
                 fakeLivids -= mob
                 continue
             }
@@ -161,7 +180,7 @@ object DungeonLividFinder {
 
     @SubscribeEvent
     fun onRenderWorld(event: LorenzRenderWorldEvent) {
-        if (!inLividBossRoom() || !config.enabled) return
+        if (!inLividBossRoom() || !config.enabled.get()) return
         if (isBlind) return
 
         val entity = lividEntityOrArmorstand ?: return
