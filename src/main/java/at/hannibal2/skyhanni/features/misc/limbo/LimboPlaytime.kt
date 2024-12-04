@@ -12,6 +12,8 @@ import at.hannibal2.skyhanni.utils.NEUInternalName.Companion.toInternalName
 import at.hannibal2.skyhanni.utils.NEUItems.getItemStack
 import at.hannibal2.skyhanni.utils.NumberUtil.addSeparators
 import at.hannibal2.skyhanni.utils.NumberUtil.roundTo
+import at.hannibal2.skyhanni.utils.RegexUtils.groupOrNull
+import at.hannibal2.skyhanni.utils.RegexUtils.matchMatcher
 import at.hannibal2.skyhanni.utils.RegexUtils.matches
 import at.hannibal2.skyhanni.utils.SimpleTimeMark
 import at.hannibal2.skyhanni.utils.repopatterns.RepoPattern
@@ -31,7 +33,7 @@ object LimboPlaytime {
      */
     private val minutesPattern by patternGroup.pattern(
         "minutes",
-        "§5§o§a(?<minutes>[\\d.,])+ minutes.*$"
+        "§5§o§a(?<minutes>[\\d.,]+) minutes.+\$"
     )
 
     /**
@@ -39,7 +41,7 @@ object LimboPlaytime {
      */
     private val hoursPattern by patternGroup.pattern(
         "hours",
-        "§5§o§b(?<hours>[\\d.,])+ hours.*$"
+        "§5§o§b(?<hours>[\\d.,]+) hours.+\$"
     )
 
     var tooltipPlaytime = mutableListOf<String>()
