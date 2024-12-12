@@ -6,6 +6,7 @@ import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorKeybind;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigLink;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 import io.github.notenoughupdates.moulconfig.observer.Property;
 import org.lwjgl.input.Keyboard;
@@ -166,6 +167,15 @@ public class DebugConfig {
     @ConfigOption(name = "Always Great Spook", desc = "Assumes the Great Spook is always active.")
     @ConfigEditorBoolean
     public Property<Boolean> forceGreatSpook = Property.of(false);
+
+    @Expose
+    @ConfigOption(name = "Show Connect4 Debug", desc = "Show debug information for Connect4 while solving.")
+    @ConfigEditorBoolean
+    public boolean connect4Debug = false;
+
+    @Expose
+    @ConfigLink(owner = DebugConfig.class, field = "connect4Debug")
+    public Position connect4DebugPosition = new Position(100, 100);
 
     // Does not have a config element!
     @Expose

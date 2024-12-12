@@ -1,6 +1,7 @@
 package at.hannibal2.skyhanni.utils
 
 import at.hannibal2.skyhanni.test.command.ErrorManager
+import at.hannibal2.skyhanni.utils.StringUtils.removeColor
 import net.minecraft.item.EnumDyeColor
 import net.minecraft.util.EnumChatFormatting
 import java.awt.Color
@@ -103,6 +104,20 @@ enum class LorenzColor(val chatColorCode: Char, private val color: Color, privat
                 Exception("Unknown chat color: $this"),
                 "Unknown chat color: $this"
             )
+            null
+        }
+
+        fun String.toLorenzColor(failOnError: Boolean = true): LorenzColor? = if (length == 1) {
+            first().toLorenzColor()
+        } else try {
+            valueOf(removeColor().uppercase())
+        } catch (e: IllegalArgumentException) {
+            if (failOnError) {
+                ErrorManager.logErrorWithData(
+                    e,
+                    "Unknown color name: $this"
+                )
+            }
             null
         }
     }
