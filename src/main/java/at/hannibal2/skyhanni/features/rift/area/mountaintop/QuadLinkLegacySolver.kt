@@ -13,6 +13,7 @@ import at.hannibal2.skyhanni.test.command.ErrorManager
 import at.hannibal2.skyhanni.utils.ConnectFourUtils
 import at.hannibal2.skyhanni.utils.InventoryUtils
 import at.hannibal2.skyhanni.utils.ItemUtils.getLore
+import at.hannibal2.skyhanni.utils.ItemUtils.getSingleLineLore
 import at.hannibal2.skyhanni.utils.ItemUtils.setLore
 import at.hannibal2.skyhanni.utils.LorenzColor
 import at.hannibal2.skyhanni.utils.LorenzColor.Companion.toLorenzColor
@@ -72,7 +73,7 @@ object QuadLinkLegacySolver {
      */
     private val winningPieceLorePattern by patternGroup.pattern(
         "piece.winning",
-        "§aWinning move!"
+        ".*§aWinning move!.*"
     )
 
     /**
@@ -97,8 +98,8 @@ object QuadLinkLegacySolver {
 
     // List of column moves made by each player
     private val moves = mutableListOf<ConnectFourUtils.C4Move>()
-    // Cache of current game state for easy comparison
-    private val currentBoardCache: MutableMap<Int, LorenzColor?> = emptyBoardCache()
+    // Cache of current game board for easy comparison
+    private var currentBoardCache = emptyBoardCache()
 
     private fun resetState() {
         myColor = null
@@ -107,30 +108,35 @@ object QuadLinkLegacySolver {
         currentBoardProp = null
         recommendedColumnMove = null
         moves.clear()
-        resetBoardCache()
+        currentBoardCache = emptyBoardCache()
     }
 
-    private fun emptyBoardCache(): MutableMap<Int, LorenzColor?> = (0..53).associateWith { null }.toMutableMap()
-    private fun resetBoardCache() = currentBoardCache.replaceAll { _, _ -> null }
+    private fun emptyBoardCache(): Map<Int, LorenzColor?> = (0..53).associateWith { null }.toMutableMap()
+
+    private fun ItemStack.isGamePiece() = indiscriminatePiecePattern.matches(displayName.orEmpty())
+    private fun ItemStack.isWinningPiece() = winningPieceLorePattern.matches(getSingleLineLore())
 
     // We want to filter out anything on the sides when trying to read the game board
     private val excludedKeys = (0..53).filter { it % 9 == 0 || it % 9 == 8 }.toSet()
-    private fun ItemStack.isGamePiece() = indiscriminatePiecePattern.matches(displayName.orEmpty())
     private fun Map<Int, ItemStack>.commonFilter() = filter { it.key !in excludedKeys && it.value.hasDisplayName() }
     private fun Map<Int, ItemStack>.filterGamePieces() = commonFilter().filter { it.value.isGamePiece() }
     private fun Map<Int, ItemStack>.filterNotGamePieces() = commonFilter().filter { !it.value.isGamePiece() }
     private fun Map<Int, ItemStack>.getCurrentTurn(): LorenzColor? = filterNotGamePieces().values.firstOrNull()?.getPlayer()
 
+    private fun String.fixHypixelColors() =
+        replace("Orange", "Gold")
+
+    private fun Pair<Int, ItemStack>.getPlayer(): LorenzColor? = second.getPlayer()
     private fun ItemStack.getPlayer(): LorenzColor? = displayName?.let {
         val myColor = myColor ?: ErrorManager.skyHanniError("Player colors not initialized")
         val opponentColor = opponentColor ?: ErrorManager.skyHanniError("Player colors not initialized")
 
         // Check if the piece is a player's placed piece
-        it.toLorenzColor(failOnError = false)?.let { color -> return color }
+        it.fixHypixelColors().toLorenzColor(failOnError = false)?.let { color -> return color }
 
         if (myTurnPiecePattern.matches(it)) myColor
         else if (notMyTurnPiecePattern.matches(it)) opponentColor
-        else ErrorManager.skyHanniError("Failed to read player color")
+        else null
     }
 
     private fun InventoryOpenEvent.readPlayerColors() {
@@ -139,17 +145,13 @@ object QuadLinkLegacySolver {
         myColor = extractColor(inventoryItems[MY_PIECE_INDICATOR_SLOT]?.displayName ?: return)
     }
 
-    private fun InventoryOpenEvent.someoneWon(): Boolean = inventoryItems.filterGamePieces().values.any {
-        winningPieceLorePattern.matches(it.getLore().firstOrNull().orEmpty())
-    }
-
     private fun regenerateBoardProp() {
         val moves = moves.takeIf { it.size > 0 } ?: return
         currentBoardProp = ConnectFourUtils.C4Board.fromMoveList(moves)
     }
 
-    private fun regenerateNextRecommendedMove() {
-        recommendedColumnMove = if (currentTurn == myColor) getNextMove() else null
+    private fun regenerateBoardCache(currentBoard: Map<Int, ItemStack>) {
+        currentBoardCache = currentBoard.map { it.key to it.value.getPlayer() }.toMap()
     }
 
     private fun extractColor(piece: String): LorenzColor? {
@@ -160,19 +162,20 @@ object QuadLinkLegacySolver {
         }
     }
 
-    private fun Int.getColumn(): Int = this % 9
-    private fun Pair<Int, ItemStack>.getColumn(): Int = first.getColumn()
+    private fun Int.getBoardColumn(): Int? {
+        val col = this % 9
+        return if (col in 1..7) col - 1 else null
+    }
+    private fun Pair<Int, ItemStack>.getBoardColumn(): Int? = first.getBoardColumn()
 
     private fun getNextMove(): Int? {
         val board = currentBoardProp ?: return null
-        val validColumns = board.getSearchOrder().takeIf {
-            it.isNotEmpty()
-        } ?: ErrorManager.skyHanniError("No valid moves available")
+        val validColumns = board.getSearchOrder()
 
         // Find the best column to play
         return validColumns.maxByOrNull { column ->
             board.play(column)
-            val score = -ConnectFourUtils.solve(board)
+            val score = ConnectFourUtils.solve(board)
             board.backtrack()
             score
         }
@@ -191,7 +194,7 @@ object QuadLinkLegacySolver {
     @HandleEvent
     fun replaceItem(event: ReplaceItemEvent) {
         if (!config.enabled || !quadLinkLegacyInventoryPattern.matches(event.inventory.name)) return
-        if (event.slot in excludedKeys || event.slot.getColumn() != recommendedColumnMove) return
+        if (event.slot in excludedKeys || event.slot.getBoardColumn() != recommendedColumnMove) return
 
         val originalItem = event.originalItem.takeIf { !it.isGamePiece() } ?: return
         if (originalItem.getPlayer() != myColor) return
@@ -213,62 +216,115 @@ object QuadLinkLegacySolver {
 
         devConfig.connect4DebugPosition.renderRenderable(
             Renderable.verticalContainer(
-                listOf(
-                    Renderable.string("My Color: ${myColor ?: "N/A"}"),
-                    Renderable.string("Opponent Color: ${opponentColor ?: "N/A"}"),
-                    Renderable.string("Current Turn: ${currentTurn ?: "N/A"}"),
-                    Renderable.string("Moves: ${moves.size}"),
-                    Renderable.string("Current Board: ${currentBoardProp?.getKey() ?: "N/A"}"),
-                    Renderable.string("Recommended Move (Column): $recommendedColumnMove"),
-                    Renderable.verticalContainer(
-                        buildList {
-                            add(Renderable.string("Current board:"))
-                            addAll(
-                                currentBoardProp?.toBoardString()?.split("\n")?.map {
-                                    Renderable.string(it)
-                                }.orEmpty()
-                            )
-                        }
-                    )
-                )
+                getDebugInfo()
             ),
             posLabel = "Connect4 Debug Info"
         )
     }
+
+    private fun getDebugInfo() = listOf(
+        Renderable.string("My Color: ${myColor ?: "N/A"}"),
+        Renderable.string("Opponent Color: ${opponentColor ?: "N/A"}"),
+        Renderable.string("Current Turn: ${currentTurn ?: "N/A"}"),
+        Renderable.string("Moves: ${moves.size}"),
+        Renderable.string("Board hash: ${currentBoardProp?.getKey() ?: "N/A"}"),
+        Renderable.string("Recommended Move (Column): $recommendedColumnMove"),
+        getBoardRenderable()
+    )
+
+    private fun getBoardRenderable() = Renderable.verticalContainer(
+        buildList {
+            add(Renderable.string("Current board:"))
+            addAll(
+                currentBoardProp?.toBoardString(
+                    myColor = myColor ?: LorenzColor.RED,
+                    opponentColor = opponentColor ?: LorenzColor.GREEN
+                )?.split("\n")?.map {
+                    Renderable.string(it)
+                }.orEmpty()
+            )
+        }
+    )
+
+    // We only want to consider new moves
+    //  Because the new move from the opponent is "flashed" when it is played, we need to do an explicit
+    //  greater than check, as a not equal check would false flag on the "animation"
+    private fun InventoryOpenEvent.getCurrentBoard(): Map<Int, ItemStack>? =
+        inventoryItems.filterGamePieces().takeIf { it.size > moves.size }
+
+    // Figure out which piece changed between the last turn and now
+    private fun getChangedPiece(currentBoard: Map<Int, ItemStack>): Pair<Int, ItemStack>? =
+        currentBoard.filter { currentBoardCache[it.key] == null }.takeIf {
+            it.size == 1 // Only one piece should have changed
+        }?.toList()?.first()
 
     @SubscribeEvent
     fun onInventoryUpdate(event: InventoryUpdatedEvent) {
         if (!config.enabled || !quadLinkLegacyInventoryPattern.matches(event.inventoryName)) return
 
         event.readPlayerColors()
-        if (event.someoneWon()) {
+        val currentBoard = event.getCurrentBoard() ?: return
+        if (currentBoard.any { it.value.isWinningPiece()} ) {
             resetState()
             return
         }
+        val changedStack = getChangedPiece(currentBoard) ?: return
 
-        val currentBoard = event.inventoryItems.filterGamePieces().takeIf {
-            // We only want to consider new moves
-            //  Because the new move from the opponent is "flashed" when it is played, we need to do an explicit
-            //  greater than check, as a not equal check would false flag on the "animation"
-            it.size > moves.size
-        } ?: return
+        val newColumn = changedStack.getBoardColumn() ?: return
+        val newPlayer = changedStack.getPlayer() ?: return
+        val newMove = ConnectFourUtils.C4Move(newPlayer, newColumn)
 
-        val changedItem = currentBoard.filter { currentBoardCache[it.key] == null }.takeIf {
-            it.size == 1 // We only want to consider single moves
-        }?.toList()?.first() ?: ErrorManager.skyHanniError(
-            "More than one move detected, skipping",
-            "currentBoardKeys" to currentBoard.keys.toString(),
-            "currentBoardCacheKeys" to currentBoardCache.keys.toString()
-        )
-
-        val newMove = ConnectFourUtils.C4Move(
-            player = changedItem.second.getPlayer() ?: ErrorManager.skyHanniError("Failed to read player"),
-            column = changedItem.getColumn()
-        )
         moves.add(newMove)
-        currentBoardCache[changedItem.first] = newMove.player
-        currentTurn = event.inventoryItems.getCurrentTurn()
+        regenerateBoardCache(currentBoard)
         regenerateBoardProp()
-        regenerateNextRecommendedMove()
+        currentTurn = event.inventoryItems.getCurrentTurn()
+        recommendedColumnMove = if (currentTurn == myColor) getNextMove() else null
+    }
+
+    private fun ConnectFourUtils.C4Board.toBoardString(
+        colored: Boolean = true,
+        opponentColor: LorenzColor = LorenzColor.RED,
+        myColor: LorenzColor = LorenzColor.YELLOW
+    ): String {
+        val board = StringBuilder()
+
+        // Initialize a map from each column to its pieces (from bottom to top)
+        val columnMap = mutableMapOf<Int, MutableList<LorenzColor?>>()
+        for (col in 0 until boardWidth) {
+            columnMap[col] = MutableList(boardHeight) { null }
+        }
+
+        // We'll track how many pieces have been placed in each column using a simple counter
+        val pieceCountPerColumn = IntArray(boardWidth) { 0 }
+
+        // Fill in the placed pieces from the history
+        for ((index, col) in history.withIndex()) {
+            val player = if (index % 2 == 0) opponentColor else myColor
+            // Place the piece at the bottom-most available slot in that column
+            // pieceCountPerColumn[col] gives the next free row (starting from 0 at the bottom)
+            val placedHeight = pieceCountPerColumn[col]
+            if (placedHeight >= boardHeight) ErrorManager.skyHanniError("Column $col is overfilled!")
+            columnMap.getOrPut(col) { mutableListOf() }
+            columnMap[col]?.let {
+                it[placedHeight] = player
+            }
+            pieceCountPerColumn[col]++
+        }
+
+        // Build the visual board from top to bottom
+        for (row in boardHeight - 1 downTo 0) {
+            for (col in 0 until boardWidth) {
+                val cell = columnMap[col]?.get(row)
+                val char = when (cell) {
+                    is LorenzColor -> cell.name[0]
+                    else -> 'O'
+                }
+                val appendString = if (colored) "§${cell?.chatColorCode ?: "7"}$char" else "$char"
+                board.append(appendString).append(' ')
+            }
+            board.append('\n')
+        }
+
+        return board.toString().trimEnd()
     }
 }

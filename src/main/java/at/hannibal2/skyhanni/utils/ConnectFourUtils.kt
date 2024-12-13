@@ -1,12 +1,18 @@
 package at.hannibal2.skyhanni.utils
 
-import at.hannibal2.skyhanni.test.command.ErrorManager
 import java.util.LinkedHashMap
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
+
+/**
+ * This entire file is a Kotlin port of a python implementation by lhorrell99
+ * https://github.com/lhorrell99/connect-4-solver/tree/master
+ */
 
 object ConnectFourUtils {
 
-    class LRUCache<K, V>(private val maxSize: Int) : LinkedHashMap<K, V>(maxSize, 0.75f, true) {
+    data class LRUCache<K, V>(private val maxSize: Int) : LinkedHashMap<K, V>(maxSize, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>): Boolean {
             return size > maxSize
         }
@@ -16,104 +22,87 @@ object ConnectFourUtils {
 
     data class C4Move(val player: LorenzColor, val column: Int)
 
-    class C4Board(val width: Int = 7, val height: Int = 6) {
+    data class C4Board(val boardWidth: Int = 7, val boardHeight: Int = 6) {
+        val boardSize = boardWidth * boardHeight
         private val boardState = LongArray(2)
-        private val colHeights = IntArray(width) { it * (height + 1) }
-        private val history = mutableListOf<Int>()
-        var moves = 0
-            private set
+        private val columnHeights = IntArray(boardWidth) { it * (boardHeight + 1) }
+        val history = mutableListOf<Int>()
+        val moves get() = history.size
+        private val baseSearchOrder =  (0 until boardWidth).sortedBy { abs(boardWidth / 2 - it) }
+        private val bitShifts = listOf(
+            1, /** | Vertical */
+            boardHeight, /** \ Diagonal */
+            boardHeight + 1, /** - Horizontal */
+            boardHeight + 2 /** / Diagonal */
+        )
 
-        private val bitShifts = listOf(1, height, height + 1, height + 2)
-        private val baseSearchOrder = (0 until width).sortedBy { abs(width / 2 - it) }
-
+        // Returns current player: 0 or 1 (0 always plays first)
         private fun getCurrentPlayer(): Int = moves and 1
 
+        // Returns opponent to current player: 0 or 1
+        private fun getOpponentPlayer(): Int = (moves + 1) and 1
+
+        // Returns column search order containing playable columns only
+        fun getSearchOrder(): List<Int> = baseSearchOrder.filter {
+            canPlay(it)
+        }.sortedBy { colSort(it) }.reversed()
+
+        // Returns bitstring of all occupied positions
         private fun getMask(): Long = boardState[0] or boardState[1]
 
+        // Returns unique game state identifier
         fun getKey(): Long = getMask() + boardState[getCurrentPlayer()]
 
-        // If top cell for this column is known as (col*(height+1) + height - 1)
+        // Returns true if col (zero indexed) is playable
         private fun canPlay(col: Int): Boolean {
-            val topCellBitIndex = col * (height + 1) + (height - 1)
+            val topCellBitIndex = (boardHeight + 1) * col + (boardHeight - 1)
             return (getMask() and (1L shl topCellBitIndex)) == 0L
         }
 
+        // Play a move in col (zero indexed)
         fun play(col: Int) {
             val player = getCurrentPlayer()
-            val move = 1L shl colHeights[col]
+            val move = 1L shl columnHeights[col]
+            columnHeights[col]++
             boardState[player] = boardState[player] or move
-            colHeights[col]++
             history.add(col)
-            moves++
         }
 
+        // Backtrack one move
         fun backtrack() {
-            val col = history.removeAt(history.lastIndex)
-            colHeights[col]--
-            val move = 1L shl colHeights[col]
-            boardState[getCurrentPlayer()] = boardState[getCurrentPlayer()] xor move
-            moves--
+            val opponent = getOpponentPlayer()
+            val col = history.removeLast()
+            columnHeights[col]--
+            val move = 1L shl columnHeights[col]
+            boardState[opponent] = boardState[opponent] xor move
         }
 
+        // Returns true if last played column creates winning alignment
         fun winningBoardState(): Boolean {
-            val playerState = boardState[getCurrentPlayer() xor 1]
+            val opponent = getOpponentPlayer()
             for (shift in bitShifts) {
-                val test = playerState and (playerState shr shift)
+                val test = boardState[opponent] and boardState[opponent] shr shift
                 if (test and (test shr (2 * shift)) != 0L) return true
             }
             return false
         }
 
-        fun getSearchOrder(): List<Int> = baseSearchOrder.filter { canPlay(it) }
+        // Returns score of complete game (evaluated for winning opponent)
+        fun getScore(): Int = -((boardWidth * boardHeight) + 1 - moves) / 2
 
-        fun getScore(): Int = -(width * height + 1 - moves) / 2
+        // Returns heuristic value for column
+        private fun colSort(col: Int): Int {
+            val player = getCurrentPlayer()
+            val move = 1L shl columnHeights[col]
+            var count = 0
+            val state = boardState[player] or move
 
-        fun toBoardString(colored: Boolean = true): String {
-            val board = StringBuilder()
-
-            // Initialize a map from each column to its pieces (from bottom to top)
-            val columnMap = mutableMapOf<Int, MutableList<LorenzColor?>>()
-            for (col in 0 until width) {
-                columnMap[col] = MutableList(height) { null }
+            for (shift in bitShifts) {
+                val test = state and (state shr shift) and (state shr (2 * shift))
+                if (test != 0L) count += test.countOneBits()
             }
 
-            // We'll track how many pieces have been placed in each column using a simple counter
-            val pieceCountPerColumn = IntArray(width) { 0 }
-
-            // Fill in the placed pieces from the history
-            // Even index = Red, odd index = Yellow (based on your rules)
-            for ((index, col) in history.withIndex()) {
-                val player = if (index % 2 == 0) LorenzColor.RED else LorenzColor.YELLOW
-                // Place the piece at the bottom-most available slot in that column
-                // pieceCountPerColumn[col] gives the next free row (starting from 0 at the bottom)
-                val placedHeight = pieceCountPerColumn[col]
-                if (placedHeight >= height) {
-                    // This would indicate an overfilled column, which should never happen if the game is valid.
-                    ErrorManager.skyHanniError("Column $col is overfilled!")
-                }
-                columnMap.getOrPut(col) { mutableListOf() }
-                columnMap[col]?.let {
-                    it[placedHeight] = player
-                }
-                pieceCountPerColumn[col]++
-            }
-
-            // Build the visual board from top to bottom
-            for (row in height - 1 downTo 0) {
-                for (col in 0 until width) {
-                    val cell = columnMap[col]?.get(row)
-                    val char = when (cell) {
-                        LorenzColor.RED -> 'R'
-                        LorenzColor.YELLOW -> 'Y'
-                        else -> '.'
-                    }
-                    val appendString = if (colored) "§${cell?.chatColorCode ?: "f"}$char" else "$char"
-                    board.append(appendString).append(' ')
-                }
-                board.append('\n')
-            }
-
-            return board.toString().trimEnd()
+            return count
         }
 
         companion object {
@@ -121,9 +110,11 @@ object ConnectFourUtils {
                 moves: List<C4Move>,
                 width: Int = 7,
                 height: Int = 6,
-            ): C4Board = C4Board(width = width, height = height).also {
-                moves.forEach { move -> it.play(move.column) }
-            }.also { return it }
+            ): C4Board {
+                val board = C4Board(width, height)
+                moves.forEach { board.play(it.column) }
+                return board
+            }
         }
     }
 
@@ -132,32 +123,34 @@ object ConnectFourUtils {
 
         fun recurse(alpha: Int, beta: Int): Int {
             var localAlpha = alpha
-            var mBeta = beta
+            var localBeta = beta
 
             // Transposition table lookup
             lruCache[board.getKey()]?.let { entry ->
-                if (entry.lowerBound) localAlpha = maxOf(localAlpha, entry.value)
-                if (entry.upperBound) mBeta = minOf(mBeta, entry.value)
-                if (localAlpha >= mBeta) return entry.value
+                if (entry.lowerBound) localAlpha = max(localAlpha, entry.value) // Lower bound (TT)
+                else if (entry.upperBound) localBeta = min(localBeta, entry.value) // Upper bound (TT)
+                else return entry.value // Exact value (TT)
+
+                if (localAlpha >= localBeta) return entry.value // Cut off (TT)
             }
 
-            // Base cases
-            if (board.winningBoardState()) return board.getScore()
-            if (board.moves == board.width * board.height) return 0
+            // Negamax implementation
+            if (board.winningBoardState()) return board.getScore() // Winning alignment
+            else if (board.moves == board.boardSize) return 0 // Drawn game
 
-            var value = -board.width * board.height
-            for (col in board.getSearchOrder()) {
-                board.play(col)
-                value = maxOf(value, -recurse(-mBeta, -localAlpha))
+            var value = -(board.boardSize)
+            for (column in board.getSearchOrder()) {
+                board.play(column)
+                value = max(value, -recurse(-localBeta, -localAlpha))
                 board.backtrack()
-                localAlpha = maxOf(localAlpha, value)
-                if (localAlpha >= mBeta) break
+                localAlpha = max(localAlpha, value)
+                if (localAlpha >= localBeta) break // Alpha cut-off
             }
 
             // Transposition table storage
             lruCache[board.getKey()] = when {
                 value <= alpha -> TTEntry(value, upperBound = true)
-                value >= mBeta -> TTEntry(value, lowerBound = true)
+                value >= localBeta -> TTEntry(value, lowerBound = true)
                 else -> TTEntry(value)
             }
 
