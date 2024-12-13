@@ -81,7 +81,7 @@ object GardenPlotIcon {
                     lastClickedSlotId = -1
                     return
                 }
-                event.replace(cachedStack[event.slot])
+                event.replace(cachedStack[event.slot] ?: return)
             }
         }
     }
