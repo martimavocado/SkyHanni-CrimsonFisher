@@ -100,12 +100,12 @@ object CarnivalShopHelper {
 
     private fun tryReplaceShopSpecificStack(event: ReplaceItemEvent) {
         if (currentProgress == null || event.isUnknownShop()) return
-        event.replace(shopSpecificInfoItemStack ?: return)
+        shopSpecificInfoItemStack?.let { event.replace(it) }
     }
 
     private fun tryReplaceOverviewStack(event: ReplaceItemEvent) {
         if (!overviewInventoryNamesPattern.matches(event.inventory.name)) return
-        event.replace(overviewInfoItemStack ?: return)
+        overviewInfoItemStack?.let { event.replace(it) }
     }
 
     @HandleEvent
