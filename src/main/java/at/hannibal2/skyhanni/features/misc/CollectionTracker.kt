@@ -21,6 +21,7 @@ import at.hannibal2.skyhanni.utils.NumberUtil.percentWithColorCode
 import at.hannibal2.skyhanni.utils.RenderUtils.renderStringsAndItems
 import at.hannibal2.skyhanni.utils.StringUtils.removeColor
 import net.minecraft.client.Minecraft
+import net.minecraft.item.ItemStack
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import java.util.Collections
 
@@ -172,6 +173,12 @@ object CollectionTracker {
         val cactusGreen = "INK_SACK-2".toInternalName()
         return InventoryUtils.countItemsInLowerInventory {
             if (internalName == cactus && it.getInternalName() == cactusGreen) {
+                return@countItemsInLowerInventory true
+            }
+            if (internalName == "TIMITE".toInternalName() &&
+                (it.getInternalName() == "YOUNGITE".toInternalName()
+                || it.getInternalName() == "TIMITE".toInternalName()
+                || it.getInternalName() == "OBSOLITE".toInternalName())) {
                 return@countItemsInLowerInventory true
             }
             it.getInternalName() == internalName
