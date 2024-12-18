@@ -21,7 +21,6 @@ import at.hannibal2.skyhanni.utils.NumberUtil.percentWithColorCode
 import at.hannibal2.skyhanni.utils.RenderUtils.renderStringsAndItems
 import at.hannibal2.skyhanni.utils.StringUtils.removeColor
 import net.minecraft.client.Minecraft
-import net.minecraft.item.ItemStack
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import java.util.Collections
 
