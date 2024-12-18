@@ -176,7 +176,6 @@ object CollectionTracker {
             }
             if (internalName == "TIMITE".toInternalName() &&
                 (it.getInternalName() == "YOUNGITE".toInternalName()
-                || it.getInternalName() == "TIMITE".toInternalName()
                 || it.getInternalName() == "OBSOLITE".toInternalName())) {
                 return@countItemsInLowerInventory true
             }
