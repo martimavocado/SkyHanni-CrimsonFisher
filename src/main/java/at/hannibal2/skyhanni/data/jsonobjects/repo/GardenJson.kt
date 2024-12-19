@@ -14,13 +14,17 @@ data class GardenJson(
     @Expose val visitors: Map<String, GardenVisitor>,
     @Expose @SerializedName("organic_matter") val organicMatter: Map<NEUInternalName, Double>,
     @Expose val fuel: Map<NEUInternalName, Double>,
+    @Expose @SerializedName("personal_best_increment") val personalBestIncrement: Map<CropType, Int>,
 )
 
 data class GardenVisitor(
-    @Expose val rarity: LorenzRarity,
-    @Expose @SerializedName("new_rarity") val newRarity: LorenzRarity?,
+    @Expose @SerializedName("rarity") private val _rarity: LorenzRarity,
+    @Expose @SerializedName("new_rarity") private val _newRarity: LorenzRarity?,
     @Expose val position: LorenzVec?,
     @Expose var skinOrType: String?,
     @Expose val mode: String,
     @Expose @SerializedName("need_items") val needItems: List<String>,
-)
+) {
+    val rarity: LorenzRarity
+        get() = _newRarity ?: _rarity
+}

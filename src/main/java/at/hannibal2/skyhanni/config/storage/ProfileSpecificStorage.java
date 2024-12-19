@@ -6,13 +6,16 @@ import at.hannibal2.skyhanni.data.IslandType;
 import at.hannibal2.skyhanni.data.MaxwellAPI;
 import at.hannibal2.skyhanni.data.jsonobjects.local.HotmTree;
 import at.hannibal2.skyhanni.data.model.ComposterUpgrade;
+import at.hannibal2.skyhanni.data.model.SkyblockStat;
 import at.hannibal2.skyhanni.features.combat.endernodetracker.EnderNodeTracker;
-import at.hannibal2.skyhanni.features.combat.ghostcounter.GhostData;
+import at.hannibal2.skyhanni.features.combat.ghosttracker.GhostTracker;
 import at.hannibal2.skyhanni.features.dungeon.CroesusChestTracker;
 import at.hannibal2.skyhanni.features.dungeon.DungeonFloor;
+import at.hannibal2.skyhanni.features.event.carnival.CarnivalGoal;
 import at.hannibal2.skyhanni.features.event.diana.DianaProfitTracker;
 import at.hannibal2.skyhanni.features.event.diana.MythologicalCreatureTracker;
 import at.hannibal2.skyhanni.features.event.hoppity.HoppityCollectionStats;
+import at.hannibal2.skyhanni.features.event.hoppity.HoppityEggType;
 import at.hannibal2.skyhanni.features.event.jerry.frozentreasure.FrozenTreasureTracker;
 import at.hannibal2.skyhanni.features.fame.UpgradeReminder;
 import at.hannibal2.skyhanni.features.fishing.tracker.FishingProfitTracker;
@@ -28,27 +31,36 @@ import at.hannibal2.skyhanni.features.garden.fortuneguide.FarmingItems;
 import at.hannibal2.skyhanni.features.garden.pests.PestProfitTracker;
 import at.hannibal2.skyhanni.features.garden.pests.VinylType;
 import at.hannibal2.skyhanni.features.garden.visitor.VisitorReward;
+import at.hannibal2.skyhanni.features.inventory.chocolatefactory.ChocolateFactoryStrayTracker;
+import at.hannibal2.skyhanni.features.inventory.experimentationtable.ExperimentsProfitTracker;
 import at.hannibal2.skyhanni.features.inventory.wardrobe.WardrobeAPI;
 import at.hannibal2.skyhanni.features.mining.MineshaftPityDisplay;
 import at.hannibal2.skyhanni.features.mining.fossilexcavator.ExcavatorProfitTracker;
+import at.hannibal2.skyhanni.features.mining.glacitemineshaft.CorpseTracker;
 import at.hannibal2.skyhanni.features.mining.powdertracker.PowderTracker;
+import at.hannibal2.skyhanni.features.misc.DraconicSacrificeTracker;
 import at.hannibal2.skyhanni.features.misc.trevor.TrevorTracker;
 import at.hannibal2.skyhanni.features.rift.area.westvillage.VerminTracker;
 import at.hannibal2.skyhanni.features.rift.area.westvillage.kloon.KloonTerminal;
 import at.hannibal2.skyhanni.features.skillprogress.SkillType;
 import at.hannibal2.skyhanni.features.slayer.SlayerProfitTracker;
 import at.hannibal2.skyhanni.utils.GenericWrapper;
+import at.hannibal2.skyhanni.utils.LorenzRarity;
 import at.hannibal2.skyhanni.utils.LorenzVec;
 import at.hannibal2.skyhanni.utils.NEUInternalName;
 import at.hannibal2.skyhanni.utils.SimpleTimeMark;
+import at.hannibal2.skyhanni.utils.StaticDurations;
 import com.google.gson.annotations.Expose;
+import kotlin.time.Duration;
 import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class ProfileSpecificStorage {
@@ -57,8 +69,35 @@ public class ProfileSpecificStorage {
         return GenericWrapper.getSimpleTimeMark(SimpleTimeMark.farPast()).getIt();
     }
 
+    private static Duration DurationZero() {
+        return GenericWrapper.getDuration(StaticDurations.getZero()).getIt();
+    }
+
     @Expose
     public String currentPet = "";
+
+    @Expose
+    public ExperimentationStorage experimentation = new ExperimentationStorage();
+
+    public static class ExperimentationStorage {
+
+        @Expose
+        public LorenzVec tablePos = new LorenzVec();
+
+        @Expose
+        public ExperimentsDryStreakStorage dryStreak = new ExperimentsDryStreakStorage();
+
+        public static class ExperimentsDryStreakStorage {
+            @Expose
+            public int attemptsSince = 0;
+
+            @Expose
+            public int xpSince = 0;
+        }
+
+        @Expose
+        public ExperimentsProfitTracker.Data experimentsProfitTracker = new ExperimentsProfitTracker.Data();
+    }
 
     @Expose
     public ChocolateFactoryStorage chocolateFactory = new ChocolateFactoryStorage();
@@ -72,6 +111,9 @@ public class ProfileSpecificStorage {
 
         @Expose
         public long currentChocolate = 0;
+
+        @Expose
+        public long maxChocolate = 0;
 
         @Expose
         public long chocolateThisPrestige = 0;
@@ -104,7 +146,7 @@ public class ProfileSpecificStorage {
         public int timeTowerCooldown = 8;
 
         @Expose
-        public int maxTimeTowerUses = 3;
+        public int maxTimeTowerUses = 0;
 
         @Expose
         public boolean hasMuRabbit = false;
@@ -149,8 +191,78 @@ public class ProfileSpecificStorage {
         public Map<IslandType, Set<LorenzVec>> collectedEggLocations = new HashMap<>();
 
         @Expose
+        public Map<IslandType, Map<String, @Nullable Boolean>> residentRabbits = new HashMap<>();
+
+        public static class HotspotRabbitStorage {
+            @Expose
+            @Nullable
+            public Integer skyblockYear;
+
+            @Expose
+            public Map<IslandType, Map<String, @Nullable Boolean>> hotspotRabbits;
+
+            public HotspotRabbitStorage(@Nullable Integer year) {
+                this.skyblockYear = year;
+                this.hotspotRabbits = new HashMap<>();
+            }
+        }
+
+        @Expose
+        public HotspotRabbitStorage hotspotRabbitStorage = new HotspotRabbitStorage(null);
+
+        @Expose
         public Integer hoppityShopYearOpened = null;
+
+        @Expose
+        public ChocolateFactoryStrayTracker.Data strayTracker = new ChocolateFactoryStrayTracker.Data();
+
+        @Expose
+        public Map<HoppityEggType, SimpleTimeMark> mealLastFound = new HashMap<>();
+
+        public static class HitmanStatsStorage {
+            @Expose
+            @Nullable
+            public Integer availableEggs = null;
+
+            @Expose
+            @Nullable
+            public SimpleTimeMark singleSlotCooldownMark = null;
+
+            @Expose
+            @Nullable
+            public SimpleTimeMark allSlotsCooldownMark = null;
+
+            @Expose
+            @Nullable
+            public Integer purchasedSlots = null;
+        }
+
+        @Expose
+        public HitmanStatsStorage hitmanStats = new HitmanStatsStorage();
     }
+
+    @Expose
+    public CarnivalStorage carnival = new CarnivalStorage();
+
+    public static class CarnivalStorage {
+
+        @Expose
+        @Nullable
+        public java.time.LocalDate lastClaimedDay = null;
+
+        @Expose
+        public int carnivalYear = 0;
+
+        @Expose
+        public Map<CarnivalGoal, Boolean> goals = new HashMap<>();
+
+        @Expose
+        // shop name -> (item name, tier)
+        public Map<String, Map<String, Integer>> carnivalShopProgress = new HashMap<>();
+    }
+
+    @Expose
+    public Map<SkyblockStat, Double> stats = new HashMap<>(SkyblockStat.getEntries().size());
 
     @Expose
     public MaxwellPowerStorage maxwell = new MaxwellPowerStorage();
@@ -269,6 +381,10 @@ public class ProfileSpecificStorage {
 
         @Expose
         public Map<CropType, Double> latestTrueFarmingFortune = new HashMap<>();
+
+        // TODO use in /ff guide
+        @Expose
+        public Map<CropType, Double> personalBestFF = new HashMap<>();
 
         @Expose
         @Nullable
@@ -430,32 +546,39 @@ public class ProfileSpecificStorage {
     }
 
     @Expose
-    public GhostCounter ghostCounter = new GhostCounter();
+    public GhostStorage ghostStorage = new GhostStorage();
 
-    public static class GhostCounter {
-
-        @Expose
-        public Map<GhostData.Option, Double> data = new HashMap<>();
+    public static class GhostStorage {
 
         @Expose
-        public boolean ctDataImported = false;
+        public GhostTracker.Data ghostTracker = new GhostTracker.Data();
 
         @Expose
-        public double bestiaryNextLevel = 0;
+        public Long bestiaryKills = 0L;
 
         @Expose
-        public double bestiaryCurrentKill = 0;
-
-        @Expose
-        public double bestiaryKillNeeded = 0;
-
-        @Expose
-        public double totalMF = 0;
-
-        @Expose
-        public int configUpdateVersion = 0;
-
+        public boolean migratedTotalKills = false;
     }
+
+    public static class CakeData {
+        @Expose
+        public Set<Integer> ownedCakes = new HashSet<>();
+
+        @Expose
+        public Set<Integer> missingCakes = new HashSet<>();
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ownedCakes.hashCode();
+            result = prime * result + missingCakes.hashCode();
+            return result;
+        }
+    }
+
+    @Expose
+    public CakeData cakeData = new CakeData();
 
     @Expose
     public PowderTracker.Data powderTracker = new PowderTracker.Data();
@@ -524,7 +647,7 @@ public class ProfileSpecificStorage {
         public HotmTree hotmTree = new HotmTree();
 
         @Expose
-        public Map<HotmAPI.Powder, PowderStorage> powder = new HashMap<>();
+        public Map<HotmAPI.PowderType, PowderStorage> powder = new HashMap<>();
 
         public static class PowderStorage {
 
@@ -554,6 +677,9 @@ public class ProfileSpecificStorage {
 
             @Expose
             public List<MineshaftPityDisplay.PityData> blocksBroken = new ArrayList<>();
+
+            @Expose
+            public CorpseTracker.BucketData corpseProfitTracker = new CorpseTracker.BucketData();
         }
     }
 
@@ -574,6 +700,7 @@ public class ProfileSpecificStorage {
         @Expose
         public int selfKillingAnimals;
 
+        // TODO change to sh tracker
         @Expose
         public Map<TrevorTracker.TrapperMobRarity, Integer> animalRarities = new HashMap<>();
     }
@@ -637,8 +764,14 @@ public class ProfileSpecificStorage {
         public DianaProfitTracker.Data dianaProfitTracker = new DianaProfitTracker.Data();
 
         @Expose
+        public Map<Integer, DianaProfitTracker.Data> dianaProfitTrackerPerElectionSeason = new HashMap<>();
+
+        @Expose
         // TODO rename
         public MythologicalCreatureTracker.Data mythologicalMobTracker = new MythologicalCreatureTracker.Data();
+
+        @Expose
+        public Map<Integer, MythologicalCreatureTracker.Data> mythologicalMobTrackerPerElectionSeason = new HashMap<>();
     }
 
     @Expose
@@ -657,5 +790,99 @@ public class ProfileSpecificStorage {
     }
 
     @Expose
+    public DraconicSacrificeTracker.Data draconicSacrificeTracker = new DraconicSacrificeTracker.Data();
+
+    @Expose
     public UpgradeReminder.CommunityShopUpgrade communityShopProfileUpgrade = null;
+
+    @Expose
+    @Nullable
+    public Integer abiphoneContactAmount = null;
+
+    @Expose
+    public Map<Integer, HoppityEventStats> hoppityEventStats = new HashMap<>();
+
+    @Expose
+    public Boolean hoppityStatLiveDisplayToggledOff = false;
+
+    public static class HoppityEventStats {
+        @Expose
+        public Map<HoppityEggType, Integer> mealsFound = new HashMap<>();
+
+        @Expose
+        public Map<LorenzRarity, RabbitData> rabbitsFound = new HashMap<>();
+
+        public static class RabbitData {
+            @Expose
+            public int uniques = 0;
+
+            @Expose
+            public int dupes = 0;
+
+            @Expose
+            public int strays = 0;
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(uniques, dupes, strays);
+            }
+        }
+
+        @Expose
+        public long dupeChocolateGained = 0;
+
+        @Expose
+        public long strayChocolateGained = 0;
+
+        @Expose
+        public Duration millisInCf = DurationZero();
+
+        @Expose
+        public int rabbitTheFishFinds = 0;
+
+        public static class LeaderboardPosition {
+            @Expose
+            public int position;
+
+            @Expose
+            public double percentile;
+
+            public LeaderboardPosition(int position, double percentile) {
+                this.position = position;
+                this.percentile = percentile;
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(position, percentile);
+            }
+        }
+
+        @Expose
+        public LeaderboardPosition initialLeaderboardPosition = new LeaderboardPosition(-1, -1.0);
+
+        @Expose
+        public LeaderboardPosition finalLeaderboardPosition = new LeaderboardPosition(-1, -1.0);
+
+        @Expose
+        public SimpleTimeMark lastLbUpdate = SimpleTimeMarkFarPast();
+
+        @Expose
+        public boolean summarized = false;
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(
+                mealsFound,
+                rabbitsFound,
+                dupeChocolateGained,
+                strayChocolateGained,
+                millisInCf,
+                rabbitTheFishFinds,
+                initialLeaderboardPosition,
+                finalLeaderboardPosition,
+                summarized
+            );
+        }
+    }
 }

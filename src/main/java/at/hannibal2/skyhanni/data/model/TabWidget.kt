@@ -1,20 +1,26 @@
 package at.hannibal2.skyhanni.data.model
 
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.events.LorenzWorldChangeEvent
 import at.hannibal2.skyhanni.events.RepositoryReloadEvent
+import at.hannibal2.skyhanni.events.SecondPassedEvent
 import at.hannibal2.skyhanni.events.TabListUpdateEvent
 import at.hannibal2.skyhanni.events.WidgetUpdateEvent
 import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.utils.ChatUtils
 import at.hannibal2.skyhanni.utils.CollectionUtils.editCopy
 import at.hannibal2.skyhanni.utils.CollectionUtils.getOrNull
 import at.hannibal2.skyhanni.utils.ConditionalUtils.transformIf
 import at.hannibal2.skyhanni.utils.LorenzUtils
 import at.hannibal2.skyhanni.utils.RegexUtils.matchMatcher
 import at.hannibal2.skyhanni.utils.RegexUtils.matches
+import at.hannibal2.skyhanni.utils.TabListData
 import at.hannibal2.skyhanni.utils.repopatterns.RepoPattern
 import net.minecraftforge.fml.common.eventhandler.EventPriority
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import kotlin.time.Duration.Companion.seconds
 
 private val repoGroup by RepoPattern.exclusiveGroup("tab.widget.enum")
 
@@ -55,7 +61,7 @@ enum class TabWidget(
     ),
     PROFILE(
         // language=RegExp
-        "(?:§.)*Profile: (?:§.)*(?<profile>\\S+).*",
+        "(?:§.)+Profile: §r§a(?<profile>[\\w\\s]+[^ §]).*",
     ),
     SB_LEVEL(
         // language=RegExp
@@ -77,7 +83,7 @@ enum class TabWidget(
         // language=RegExp
         "(?:§.)*Pet:",
     ),
-    PET_TRANING(
+    PET_TRAINING(
         // language=RegExp
         "(?:§.)*Pet Training:",
     ),
@@ -95,7 +101,7 @@ enum class TabWidget(
     ),
     EVENT(
         // language=RegExp
-        "(?:§.)*Event: (?:§.)*(?<event>.*)",
+        "(?:§.)*Event: (?<color>(?:§.)*)(?<event>.*)",
     ),
     SKILLS(
         // language=RegExp
@@ -112,6 +118,10 @@ enum class TabWidget(
     COOP(
         // language=RegExp
         "(?:§.)*Coop (?:§.)*.*",
+    ),
+    ISLAND(
+        // language=RegExp
+        "(?:§.)*Island",
     ),
     MINION(
         // language=RegExp
@@ -195,7 +205,7 @@ enum class TabWidget(
     ),
     BROODMOTHER(
         // language=RegExp
-        "Broodmother: (?:§.)*(?<time>.*)",
+        "Broodmother: (?:§.)*(?<stage>.*)",
     ),
     EYES_PLACED(
         // language=RegExp
@@ -207,7 +217,7 @@ enum class TabWidget(
     ),
     DRAGON(
         // language=RegExp
-        "(?:§.)*Dragon: (?:§.)*\\((?<type>[^)])\\)",
+        "(?:§.)*Dragon: (?:§.)*\\((?<type>[^)]*)\\)",
     ),
     VOLCANO(
         // language=RegExp
@@ -252,6 +262,10 @@ enum class TabWidget(
     PESTS(
         // language=RegExp
         "(?:§.)*Pests:",
+    ),
+    PEST_TRAPS(
+        // language=RegExp
+        "(?:§.)*Pest Traps: (?:§.)*(?<count>\\d+)/(?<max>\\d+)",
     ),
     VISITORS(
         // language=RegExp
@@ -306,8 +320,11 @@ enum class TabWidget(
     SCRAP(
         // language=RegExp
         "Scrap: (?:§.)*(?<amount>\\d)(?:§.)*/(?:§.)*\\d",
-    )
-
+    ),
+    EVENT_TRACKERS(
+        // language=RegExp
+        "§e§lEvent Trackers:",
+    ),
     ;
 
     /** The pattern for the first line of the widget*/
@@ -315,13 +332,14 @@ enum class TabWidget(
 
     /** The current active information from tab list.
      *
-     * When the widget isn't visible it will be empty
+     * When the widget isn't visible, it will be empty
      * */
     var lines: List<String> = emptyList()
         private set
 
     /** Both are inclusive */
     var boundary = -1 to -1
+        private set
 
     /** Is this widget currently visible in the tab list */
     var isActive: Boolean = false
@@ -341,12 +359,12 @@ enum class TabWidget(
         if (lines == this.lines) return
         this.lines = lines
         isActive = true
-        WidgetUpdateEvent(this, lines).postAndCatch()
+        WidgetUpdateEvent(this, lines).post()
     }
 
     private fun postClearEvent() {
         lines = emptyList()
-        WidgetUpdateEvent(this, lines).postAndCatch()
+        WidgetUpdateEvent(this, lines).post()
     }
 
     /** Update the state of the widget, posts the clear if [isActive] == true && [gotChecked] == false */
@@ -367,11 +385,25 @@ enum class TabWidget(
         /** Patterns that where loaded from a future version*/
         private var extraPatterns: List<Pattern> = emptyList()
 
+        private var sentSinceWorldChange = false
+
         init {
             entries.forEach { it.pattern }
         }
 
-        @SubscribeEvent(priority = EventPriority.HIGH)
+        private val FORCE_UPDATE_DELAY = 2.seconds
+
+        @SubscribeEvent
+        fun onSecond(event: SecondPassedEvent) {
+            if (sentSinceWorldChange || !LorenzUtils.inSkyBlock) return
+            if (LorenzUtils.lastWorldSwitch.passedSince() < FORCE_UPDATE_DELAY) return
+            sentSinceWorldChange = true
+            @Suppress("DEPRECATION")
+            update(TabListData.getTabList())
+            ChatUtils.debug("Forcefully Updated Widgets")
+        }
+
+        @HandleEvent(priority = HandleEvent.HIGH)
         fun onTabListUpdate(event: TabListUpdateEvent) {
             if (!LorenzUtils.inSkyBlock) {
                 if (separatorIndexes.isNotEmpty()) {
@@ -380,8 +412,11 @@ enum class TabWidget(
                 }
                 return
             }
+            update(event.tabList)
+        }
 
-            val tabList = filterTabList(event.tabList)
+        private fun update(newTablist: List<String>) {
+            val tabList = filterTabList(newTablist)
 
             separatorIndexes.clear()
 
@@ -405,6 +440,11 @@ enum class TabWidget(
             }
         }
 
+        @SubscribeEvent
+        fun onWorldChange(event: LorenzWorldChangeEvent) {
+            sentSinceWorldChange = false
+        }
+
         @SubscribeEvent(priority = EventPriority.LOW)
         fun onRepoReload(event: RepositoryReloadEvent) {
             extraPatterns = repoGroup.getUnusedPatterns()
@@ -419,11 +459,13 @@ enum class TabWidget(
             val removeIndexes = mutableListOf<Int>()
 
             for ((index, header) in headers) when {
-                PLAYER_LIST.pattern.matches(header) -> if (playerListFound) removeIndexes.add(index - removeIndexes.size) else playerListFound =
-                    true
+                PLAYER_LIST.pattern.matches(header) ->
+                    if (playerListFound) removeIndexes.add(index - removeIndexes.size)
+                    else playerListFound = true
 
-                INFO.pattern.matches(header) -> if (infoFound) removeIndexes.add(index - removeIndexes.size) else infoFound =
-                    true
+                INFO.pattern.matches(header) ->
+                    if (infoFound) removeIndexes.add(index - removeIndexes.size)
+                    else infoFound = true
             }
 
             return tabList.transformIf({ size > 81 }, { dropLast(size - 80) }).editCopy {

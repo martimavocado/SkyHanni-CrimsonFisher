@@ -1,5 +1,6 @@
 package at.hannibal2.skyhanni.features.inventory.wardrobe
 
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.data.ProfileStorageData
 import at.hannibal2.skyhanni.events.DebugDataCollectEvent
 import at.hannibal2.skyhanni.events.InventoryCloseEvent
@@ -9,6 +10,7 @@ import at.hannibal2.skyhanni.features.misc.items.EstimatedItemValueCalculator
 import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
 import at.hannibal2.skyhanni.utils.DelayedRun
 import at.hannibal2.skyhanni.utils.InventoryUtils
+import at.hannibal2.skyhanni.utils.ItemUtils.getInternalNameOrNull
 import at.hannibal2.skyhanni.utils.ItemUtils.name
 import at.hannibal2.skyhanni.utils.LorenzUtils
 import at.hannibal2.skyhanni.utils.NumberUtil.formatInt
@@ -31,6 +33,10 @@ object WardrobeAPI {
     val storage get() = ProfileStorageData.profileSpecific?.wardrobe
 
     private val repoGroup = RepoPattern.group("inventory.wardrobe")
+
+    /**
+     * REGEX-TEST: Wardrobe (2/2)
+     */
     private val inventoryPattern by repoGroup.pattern(
         "inventory.name",
         "Wardrobe \\((?<currentPage>\\d+)/\\d+\\)",
@@ -94,7 +100,7 @@ object WardrobeAPI {
         if (slot.isEmpty()) return@buildList
         add("§aEstimated Armor Value:")
         var totalPrice = 0.0
-        for (stack in slot.armor.filterNotNull()) {
+        for (stack in slot.armor.filterNotNull().filter { it.getInternalNameOrNull() != null }) {
             val price = EstimatedItemValueCalculator.getTotalPrice(stack)
             add("  §7- ${stack.name}: §6${price.shortFormat()}")
             totalPrice += price
@@ -174,8 +180,8 @@ object WardrobeAPI {
         }
     }
 
-    @SubscribeEvent
-    fun onDebugCollect(event: DebugDataCollectEvent) {
+    @HandleEvent
+    fun onDebug(event: DebugDataCollectEvent) {
         event.title("Wardrobe")
         event.addIrrelevant {
             for (slot in slots) {
@@ -189,9 +195,9 @@ object WardrobeAPI {
                     add("$slotInfo is empty")
                 } else {
                     add(slotInfo)
-                    setOf("Helmet", "Chestplate", "Leggings", "Boots").forEachIndexed { id, armourName ->
+                    setOf("Helmet", "Chestplate", "Leggings", "Boots").forEachIndexed { id, armorName ->
                         slot.getData()?.armor?.get(id)?.name?.let { name ->
-                            add("   $armourName: $name")
+                            add("   $armorName: $name")
                         }
                     }
                 }

@@ -1,5 +1,6 @@
 package at.hannibal2.skyhanni.events
 
+import at.hannibal2.skyhanni.api.event.SkyHanniEvent
 import at.hannibal2.skyhanni.utils.BlockUtils.getBlockAt
 import at.hannibal2.skyhanni.utils.BlockUtils.getBlockStateAt
 import at.hannibal2.skyhanni.utils.RegexUtils.matchMatcher
@@ -7,7 +8,7 @@ import at.hannibal2.skyhanni.utils.toLorenzVec
 import net.minecraft.block.state.IBlockState
 import net.minecraft.util.BlockPos
 
-class ServerBlockChangeEvent(private val blockPos: BlockPos, private val blockState: IBlockState) : LorenzEvent() {
+class ServerBlockChangeEvent(blockPos: BlockPos, blockState: IBlockState) : SkyHanniEvent() {
 
     val location by lazy { blockPos.toLorenzVec() }
     val old by lazy { location.getBlockAt().toString().getName() }
@@ -17,7 +18,7 @@ class ServerBlockChangeEvent(private val blockPos: BlockPos, private val blockSt
 
     companion object {
 
-        val pattern = "Block\\{minecraft:(?<name>.*)}".toPattern()
+        private val pattern = "Block\\{minecraft:(?<name>.*)}".toPattern()
 
         private fun String.getName() = pattern.matchMatcher(this) {
             group("name")

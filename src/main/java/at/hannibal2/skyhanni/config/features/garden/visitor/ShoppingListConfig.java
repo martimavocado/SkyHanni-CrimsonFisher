@@ -16,7 +16,7 @@ public class ShoppingListConfig {
     public boolean display = true;
 
     @Expose
-    // TODO renmae "position"
+    // TODO rename "position"
     @ConfigLink(owner = ShoppingListConfig.class, field = "display")
     public Position pos = new Position(180, 170, false, true);
 
@@ -60,4 +60,10 @@ public class ShoppingListConfig {
     @ConfigEditorBoolean
     @FeatureToggle
     public boolean itemPreview = true;
+
+    @Expose
+    @ConfigOption(name = "Ignore Spaceman", desc = "Exclude crops requested by Spaceman from the shopping list.")
+    @ConfigEditorBoolean
+    public boolean ignoreSpaceman = false;
+
 }

@@ -1,6 +1,7 @@
 package at.hannibal2.skyhanni.features.garden
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.config.ConfigFileType
 import at.hannibal2.skyhanni.config.ConfigUpdaterMigrator
 import at.hannibal2.skyhanni.config.enums.OutsideSbFeature
@@ -15,7 +16,7 @@ import at.hannibal2.skyhanni.events.TabListUpdateEvent
 import at.hannibal2.skyhanni.features.garden.GardenAPI.addCropIcon
 import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
 import at.hannibal2.skyhanni.test.command.ErrorManager
-import at.hannibal2.skyhanni.utils.APIUtil
+import at.hannibal2.skyhanni.utils.APIUtils
 import at.hannibal2.skyhanni.utils.ChatUtils
 import at.hannibal2.skyhanni.utils.ConfigUtils
 import at.hannibal2.skyhanni.utils.HypixelCommands
@@ -32,10 +33,10 @@ import at.hannibal2.skyhanni.utils.SoundUtils
 import at.hannibal2.skyhanni.utils.StringUtils.removeColor
 import at.hannibal2.skyhanni.utils.TabListData
 import at.hannibal2.skyhanni.utils.TimeUtils.format
+import at.hannibal2.skyhanni.utils.json.toJsonArray
 import at.hannibal2.skyhanni.utils.repopatterns.RepoPattern
 import com.google.gson.Gson
 import com.google.gson.JsonPrimitive
-import io.github.moulberry.notenoughupdates.util.toJsonArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -57,7 +58,7 @@ import kotlin.time.Duration.Companion.seconds
 @SkyHanniModule
 object GardenNextJacobContest {
 
-    private var dispatcher = Dispatchers.IO
+    private val dispatcher = Dispatchers.IO
     private var display = emptyList<Any>()
     private var simpleDisplay = emptyList<String>()
     var contests = mutableMapOf<SimpleTimeMark, FarmingContest>()
@@ -74,14 +75,13 @@ object GardenNextJacobContest {
      * REGEX-TEST: Late Summer, Year 351
      * REGEX-TEST: Autumn, Year 351
      */
-
     val monthPattern by patternGroup.pattern(
         "month",
         "(?<month>(?:\\w+ )?(?:Summer|Spring|Winter|Autumn)), Year (?<year>\\d+)"
     )
     private val cropPattern by patternGroup.pattern(
         "crop",
-        "§(e○|6☘) §7(?<crop>.*)"
+        "§(?:e○|6☘) §7(?<crop>.*)"
     )
 
     private const val CLOSE_TO_NEW_YEAR_TEXT = "§7Close to new SB year!"
@@ -98,8 +98,8 @@ object GardenNextJacobContest {
     var fetchedFromElite = false
     private var isSendingContests = false
 
-    @SubscribeEvent
-    fun onDebugDataCollect(event: DebugDataCollectEvent) {
+    @HandleEvent
+    fun onDebug(event: DebugDataCollectEvent) {
         event.title("Garden Next Jacob Contest")
 
         if (!GardenAPI.inGarden()) {
@@ -137,7 +137,7 @@ object GardenNextJacobContest {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onTabListUpdate(event: TabListUpdateEvent) {
         var next = false
         val newList = mutableListOf<String>()
@@ -252,9 +252,8 @@ object GardenNextJacobContest {
                 } else {
                     ChatUtils.clickableChat(
                         "§2Click here to submit this year's farming contests. Thank you for helping everyone out!",
-                        onClick = {
-                            shareContests()
-                        },
+                        onClick = { shareContests() },
+                        "§eClick to submit!",
                         oneTimeClick = true
                     )
                 }
@@ -279,7 +278,7 @@ object GardenNextJacobContest {
         SkyHanniMod.configManager.saveConfig(ConfigFileType.JACOB_CONTESTS, "Save contests")
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigLoad(event: ConfigLoadEvent) {
         val savedContests = SkyHanniMod.jacobContestsData.contestTimes
         val year = savedContests.firstNotNullOfOrNull {
@@ -310,6 +309,7 @@ object GardenNextJacobContest {
                     SkyHanniMod.feature.storage.contestSendingAsked = true
                     ChatUtils.chat("§2Enabled automatic sharing of future contests!")
                 },
+                "§eClick to enable autosharing!",
                 oneTimeClick = true
             )
         }
@@ -441,7 +441,7 @@ object GardenNextJacobContest {
             SkyHanniMod.coroutineScope.launch {
                 openPopupWindow(
                     "<html>Farming Contest soon!<br />" +
-                        "Crops: ${cropTextNoColor}</html>"
+                        "Crops: $cropTextNoColor</html>"
                 )
             }
         }
@@ -515,8 +515,10 @@ object GardenNextJacobContest {
     }
 
     private fun isEnabled() =
-        config.display && ((LorenzUtils.inSkyBlock && (GardenAPI.inGarden() || config.showOutsideGarden)) ||
-            (OutsideSbFeature.NEXT_JACOB_CONTEST.isSelected() && !LorenzUtils.inSkyBlock))
+        config.display && (
+            (LorenzUtils.inSkyBlock && (GardenAPI.inGarden() || config.showOutsideGarden)) ||
+                (OutsideSbFeature.NEXT_JACOB_CONTEST.isSelected() && !LorenzUtils.inSkyBlock)
+            )
 
     private fun isFetchEnabled() = isEnabled() && config.fetchAutomatically
     private fun isSendEnabled() =
@@ -543,7 +545,7 @@ object GardenNextJacobContest {
     suspend fun fetchUpcomingContests() {
         try {
             val url = "https://api.elitebot.dev/contests/at/now"
-            val result = withContext(dispatcher) { APIUtil.getJSONResponse(url) }.asJsonObject
+            val result = withContext(dispatcher) { APIUtils.getJSONResponse(url) }.asJsonObject
 
             val newContests = mutableMapOf<SimpleTimeMark, FarmingContest>()
 
@@ -563,10 +565,15 @@ object GardenNextJacobContest {
                     newContests[timeMark + contestDuration] = FarmingContest(timeMark + contestDuration, crops)
                 }
             } else {
-                ChatUtils.chat("This year's contests aren't available to fetch automatically yet, please load them from your calendar or wait 10 minutes.")
-                ChatUtils.clickableChat("Click here to open your calendar!", onClick = {
-                    HypixelCommands.calendar()
-                })
+                ChatUtils.chat(
+                    "This year's contests aren't available to fetch automatically yet, " +
+                        "please load them from your calendar or wait 10 minutes."
+                )
+                ChatUtils.clickableChat(
+                    "Click here to open your calendar!",
+                    onClick = { HypixelCommands.calendar() },
+                    "§eClick to run /calendar!"
+                )
             }
 
             if (newContests.count() == MAX_CONTESTS_PER_YEAR) {
@@ -611,7 +618,7 @@ object GardenNextJacobContest {
         val url = "https://api.elitebot.dev/contests/at/now"
         val body = Gson().toJson(formatted)
 
-        val result = withContext(dispatcher) { APIUtil.postJSONIsSuccessful(url, body) }
+        val result = withContext(dispatcher) { APIUtils.postJSONIsSuccessful(url, body) }
 
         if (result) {
             ChatUtils.chat("Successfully submitted this years upcoming contests, thank you for helping everyone out!")
@@ -634,7 +641,7 @@ object GardenNextJacobContest {
 
     fun isNextCrop(cropName: CropType) = nextContestCrops.contains(cropName) && config.otherGuis
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigFix(event: ConfigUpdaterMigrator.ConfigFixEvent) {
         event.move(3, "garden.nextJacobContestDisplay", "garden.nextJacobContests.display")
         event.move(3, "garden.nextJacobContestEverywhere", "garden.nextJacobContests.everywhere")

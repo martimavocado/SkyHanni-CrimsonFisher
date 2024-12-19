@@ -1,5 +1,6 @@
 package at.hannibal2.skyhanni.features.rift.area.stillgorechateau
 
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.config.ConfigUpdaterMigrator
 import at.hannibal2.skyhanni.data.jsonobjects.repo.RiftEffigiesJson
 import at.hannibal2.skyhanni.events.DebugDataCollectEvent
@@ -44,7 +45,7 @@ object RiftBloodEffigies {
     )
     val heartsPattern by patternGroup.pattern(
         "heart",
-        "Effigies: (?<hearts>((§[7c])?⧯)*)"
+        "Effigies: (?<hearts>(?:(?:§[7c])?⧯)*)"
     )
 
     @SubscribeEvent
@@ -54,8 +55,8 @@ object RiftBloodEffigies {
 
     private fun cleanMap() = (0..5).associateWith { SimpleTimeMark.farPast() }
 
-    @SubscribeEvent
-    fun onDebugDataCollect(event: DebugDataCollectEvent) {
+    @HandleEvent
+    fun onDebug(event: DebugDataCollectEvent) {
         event.title("Rift Blood Effigies")
 
         if (!isEnabled()) {
@@ -74,12 +75,12 @@ object RiftBloodEffigies {
     fun onRepoReload(event: RepositoryReloadEvent) {
         val newLocations = event.getConstant<RiftEffigiesJson>("RiftEffigies").locations
         if (newLocations.size != 6) {
-            error("Invalid rift effigies size: ${newLocations.size} (expeced 6)")
+            error("Invalid rift effigies size: ${newLocations.size} (expected 6)")
         }
         locations = newLocations
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onScoreboardChange(event: RawScoreboardUpdateEvent) {
         if (!isEnabled()) return
 
@@ -90,7 +91,7 @@ object RiftBloodEffigies {
 
         val split = hearts.split("§").drop(1)
         for ((index, s) in split.withIndex()) {
-            val time = effigiesTimes[index]!!
+            val time = effigiesTimes[index] ?: continue
 
             if (time.isInPast()) {
                 if (s == "7") {
@@ -131,7 +132,7 @@ object RiftBloodEffigies {
 
         for ((index, location) in locations.withIndex()) {
             val name = "Effigy #${index + 1}"
-            val duration = effigiesTimes[index]!!
+            val duration = effigiesTimes[index] ?: continue
 
             if (duration.isFarPast()) {
                 if (config.unknownTime) {
@@ -163,7 +164,7 @@ object RiftBloodEffigies {
 
     fun isEnabled() = RiftAPI.inRift() && config.enabled && RiftAPI.inStillgoreChateau()
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigFix(event: ConfigUpdaterMigrator.ConfigFixEvent) {
         event.move(9, "rift.area.stillgoreChateauConfig", "rift.area.stillgoreChateau")
     }

@@ -10,6 +10,7 @@ import at.hannibal2.skyhanni.features.inventory.wardrobe.CustomWardrobeKeybinds
 import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
 import at.hannibal2.skyhanni.utils.DelayedRun
 import at.hannibal2.skyhanni.utils.KeyboardManager.isKeyHeld
+import at.hannibal2.skyhanni.utils.system.PlatformUtils
 import io.github.moulberry.notenoughupdates.NEUApi
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.inventory.GuiChest
@@ -24,7 +25,7 @@ object GuiData {
 
     var preDrawEventCancelled = false
 
-    @SubscribeEvent(priority = EventPriority.HIGH)
+    @HandleEvent(priority = HandleEvent.HIGH)
     fun onNeuRenderEvent(event: NEURenderEvent) {
         if (preDrawEventCancelled) event.cancel()
     }
@@ -36,12 +37,15 @@ object GuiData {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     fun onGuiClick(event: GuiScreenEvent.MouseInputEvent.Pre) {
+
+        if (CustomWardrobeKeybinds.allowMouseClick()) return
+
         if (preDrawEventCancelled) event.isCanceled = true
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGH)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onGuiKeyPress(event: GuiScreenEvent.KeyboardInputEvent.Pre) {
-        val keys = Minecraft.getMinecraft().gameSettings.let {
+        val allowedKeys = Minecraft.getMinecraft().gameSettings.let {
             listOf(
                 Keyboard.KEY_ESCAPE,
                 it.keyBindInventory.keyCode,
@@ -49,7 +53,7 @@ object GuiData {
                 it.keyBindFullscreen.keyCode,
             )
         }
-        if (keys.any { it.isKeyHeld() }) return
+        if (allowedKeys.any { it.isKeyHeld() }) return
 
         if (CustomWardrobeKeybinds.allowKeyboardClick()) return
 
@@ -78,7 +82,7 @@ object GuiData {
     @SubscribeEvent(priority = EventPriority.LOW)
     fun onGuiOpen(event: GuiOpenEvent) {
         if (preDrawEventCancelled) {
-            NEUApi.setInventoryButtonsToDisabled()
+            if (PlatformUtils.isNeuLoaded()) NEUApi.setInventoryButtonsToDisabled()
         }
     }
 }

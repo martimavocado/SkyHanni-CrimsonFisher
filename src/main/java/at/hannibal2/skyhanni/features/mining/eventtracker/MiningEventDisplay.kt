@@ -1,7 +1,9 @@
 package at.hannibal2.skyhanni.features.mining.eventtracker
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.config.ConfigUpdaterMigrator
+import at.hannibal2.skyhanni.config.enums.OutsideSbFeature
 import at.hannibal2.skyhanni.config.features.mining.MiningEventConfig
 import at.hannibal2.skyhanni.data.IslandType
 import at.hannibal2.skyhanni.events.GuiRenderEvent
@@ -11,7 +13,7 @@ import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
 import at.hannibal2.skyhanni.utils.ConfigUtils
 import at.hannibal2.skyhanni.utils.LorenzUtils
 import at.hannibal2.skyhanni.utils.LorenzUtils.isInIsland
-import at.hannibal2.skyhanni.utils.NEUInternalName.Companion.asInternalName
+import at.hannibal2.skyhanni.utils.NEUInternalName.Companion.toInternalName
 import at.hannibal2.skyhanni.utils.NEUItems.getItemStack
 import at.hannibal2.skyhanni.utils.RenderUtils.renderRenderables
 import at.hannibal2.skyhanni.utils.SimpleTimeMark.Companion.asTimeMark
@@ -33,7 +35,7 @@ object MiningEventDisplay {
     @SubscribeEvent
     fun onRenderOverlay(event: GuiRenderEvent.GuiOverlayRenderEvent) {
         if (!shouldDisplay()) return
-        config.position.renderRenderables(display, posLabel = "Upcoming Events Display")
+        config.position.renderRenderables(display, posLabel = "Upcoming Mining Events")
     }
 
     private fun updateDisplay() {
@@ -68,18 +70,18 @@ object MiningEventDisplay {
             } else {
                 Renderable.string("§a${islandType.displayName}§8:")
             }
-            add(Renderable.horizontalContainer(listOf(islandName, *upcomingEvents), 3))
+            add(Renderable.horizontalContainer(listOf(islandName) + upcomingEvents, 3))
         }
     }
 
     private fun getIslandIcon(islandType: IslandType) = listOf(
         when (islandType) {
             IslandType.DWARVEN_MINES -> Renderable.itemStack(
-                "MITHRIL_ORE".asInternalName().getItemStack(),
+                "MITHRIL_ORE".toInternalName().getItemStack(),
             )
 
             IslandType.CRYSTAL_HOLLOWS -> Renderable.itemStack(
-                "PERFECT_RUBY_GEM".asInternalName().getItemStack(),
+                "PERFECT_RUBY_GEM".toInternalName().getItemStack(),
             )
 
             else -> unknownDisplay
@@ -122,10 +124,13 @@ object MiningEventDisplay {
         }
     }
 
-    private fun shouldDisplay() =
-        LorenzUtils.inSkyBlock && config.enabled && !(!config.outsideMining && !MiningEventTracker.isMiningIsland())
+    private fun shouldDisplay(): Boolean {
+        val isOnValidMiningLocation = LorenzUtils.inSkyBlock && (config.outsideMining || MiningEventTracker.isMiningIsland())
 
-    @SubscribeEvent
+        return (isOnValidMiningLocation || OutsideSbFeature.MINING_EVENT_DISPLAY.isSelected()) && config.enabled
+    }
+
+    @HandleEvent
     fun onConfigFix(event: ConfigUpdaterMigrator.ConfigFixEvent) {
         event.transform(46, "mining.miningEvent.compressedFormat") {
             ConfigUtils.migrateBooleanToEnum(it, CompressFormat.COMPACT_TEXT, CompressFormat.DEFAULT)

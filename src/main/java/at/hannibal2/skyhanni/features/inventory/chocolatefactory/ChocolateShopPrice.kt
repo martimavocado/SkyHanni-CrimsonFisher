@@ -7,20 +7,20 @@ import at.hannibal2.skyhanni.events.LorenzChatEvent
 import at.hannibal2.skyhanni.events.SecondPassedEvent
 import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
 import at.hannibal2.skyhanni.utils.DisplayTableEntry
+import at.hannibal2.skyhanni.utils.ItemPriceUtils.getPrice
+import at.hannibal2.skyhanni.utils.ItemPriceUtils.getPriceOrNull
 import at.hannibal2.skyhanni.utils.ItemUtils.getInternalName
 import at.hannibal2.skyhanni.utils.ItemUtils.getLore
 import at.hannibal2.skyhanni.utils.ItemUtils.itemName
 import at.hannibal2.skyhanni.utils.ItemUtils.loreCosts
 import at.hannibal2.skyhanni.utils.LorenzUtils
 import at.hannibal2.skyhanni.utils.NEUInternalName
-import at.hannibal2.skyhanni.utils.NEUItems.getPrice
-import at.hannibal2.skyhanni.utils.NEUItems.getPriceOrNull
 import at.hannibal2.skyhanni.utils.NumberUtil.addSeparators
 import at.hannibal2.skyhanni.utils.NumberUtil.formatLong
 import at.hannibal2.skyhanni.utils.NumberUtil.million
 import at.hannibal2.skyhanni.utils.NumberUtil.shortFormat
+import at.hannibal2.skyhanni.utils.RegexUtils.firstMatcher
 import at.hannibal2.skyhanni.utils.RegexUtils.groupOrNull
-import at.hannibal2.skyhanni.utils.RegexUtils.matchFirst
 import at.hannibal2.skyhanni.utils.RegexUtils.matchMatcher
 import at.hannibal2.skyhanni.utils.RegexUtils.matches
 import at.hannibal2.skyhanni.utils.RenderUtils.renderRenderables
@@ -37,20 +37,26 @@ object ChocolateShopPrice {
     private var display = emptyList<Renderable>()
     private var products = emptyList<Product>()
 
-    private val menuNamePattern by ChocolateFactoryAPI.patternGroup.pattern(
+    val menuNamePattern by ChocolateFactoryAPI.patternGroup.pattern(
         "shop.title",
-        "Chocolate Shop"
+        "Chocolate Shop",
     )
+
+    /**
+     * REGEX-TEST: §aYou bought §r§aSupreme Chocolate Bar§r§a!
+     * REGEX-TEST: §aYou bought §r§aSupreme Chocolate Bar§r§8 x5§r§a!
+     */
     private val itemBoughtPattern by ChocolateFactoryAPI.patternGroup.pattern(
         "shop.bought",
-        "§aYou bought §r§.(?<item>[\\w ]+)§r(?:§8 x(?<amount>\\d+)§r)?§a!"
+        "§aYou bought §r§.(?<item>[\\w ]+)§r(?:§8 x(?<amount>\\d+)§r)?§a!",
     )
+
     /**
      * REGEX-TEST: §7Chocolate Spent: §60
      */
     private val chocolateSpentPattern by ChocolateFactoryAPI.patternGroup.pattern(
         "shop.spent",
-        "§7Chocolate Spent: §6(?<amount>[\\d,]+)"
+        "§7Chocolate Spent: §6(?<amount>[\\d,]+)",
     )
 
     var inInventory = false
@@ -92,7 +98,7 @@ object ChocolateShopPrice {
             val lore = item.getLore()
 
             if (slot == MILESTONE_INDEX) {
-                lore.matchFirst(chocolateSpentPattern) {
+                chocolateSpentPattern.firstMatcher(lore) {
                     chocolateSpent = group("amount").formatLong()
                 }
             }
@@ -131,7 +137,7 @@ object ChocolateShopPrice {
                 add("§7Profit per purchase: §6${profit.shortFormat()} ")
                 add("")
                 add("§7Chocolate amount: §c${product.chocolate.shortFormat()} ")
-                add("§7Profit per million chocolate: §6${perFormat} ")
+                add("§7Profit per million chocolate: §6$perFormat ")
                 add("")
                 val formattedTimeUntilGoal = ChocolateAmount.CURRENT.formattedTimeUntilGoal(product.chocolate)
                 add("§7Time until affordable: §6$formattedTimeUntilGoal ")
@@ -143,8 +149,8 @@ object ChocolateShopPrice {
                     factor,
                     product.item,
                     hover,
-                    highlightsOnHoverSlots = product.slot?.let { listOf(it) } ?: emptyList()
-                )
+                    highlightsOnHoverSlots = product.slot?.let { listOf(it) }.orEmpty(),
+                ),
             )
         }
 
@@ -171,7 +177,7 @@ object ChocolateShopPrice {
             config.position.renderRenderables(
                 display,
                 extraSpace = 5,
-                posLabel = "Chocolate Shop Price"
+                posLabel = "Chocolate Shop Price",
             )
         }
     }

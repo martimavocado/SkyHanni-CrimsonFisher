@@ -10,6 +10,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDraggableLi
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigLink;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
+import io.github.notenoughupdates.moulconfig.observer.Property;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,13 +57,43 @@ public class ChocolateFactoryConfig {
     ));
 
     @Expose
+    @ConfigOption(name = "Stray Rabbit Warning", desc = "")
+    @Accordion
+    public ChocolateFactoryStrayRabbitWarningConfig rabbitWarning = new ChocolateFactoryStrayRabbitWarningConfig();
+
+    @Expose
+    @ConfigOption(name = "Upgrade Warnings", desc = "")
+    @Accordion
+    public ChocolateFactoryUpgradeWarningsConfig chocolateUpgradeWarnings = new ChocolateFactoryUpgradeWarningsConfig();
+
+    @Expose
+    @ConfigOption(name = "Chocolate Shop Price", desc = "")
+    @Accordion
+    public ChocolateShopPriceConfig chocolateShopPrice = new ChocolateShopPriceConfig();
+
+    @Expose
+    @ConfigOption(name = "Chocolate Factory Keybinds", desc = "")
+    @Accordion
+    public ChocolateFactoryKeybindsConfig keybinds = new ChocolateFactoryKeybindsConfig();
+
+    @Expose
+    @ConfigOption(name = "Chocolate Factory Custom Reminder", desc = "")
+    @Accordion
+    public ChocolateFactoryCustomReminderConfig customReminder = new ChocolateFactoryCustomReminderConfig();
+
+    @Expose
+    @ConfigOption(name = "Hoppity Collection Stats", desc = "")
+    @Accordion
+    public HoppityCollectionStatsConfig hoppityCollectionStats = new HoppityCollectionStatsConfig();
+
+    @Expose
     @ConfigOption(name = "Show Stack Sizes", desc = "Show additional info as many items in the chocolate menu as the stack size.")
     @ConfigEditorBoolean
     public boolean showStackSizes = true;
 
     @Expose
     @ConfigOption(name = "Highlight Upgrades", desc = "Highlight any upgrades that you can afford.\n" +
-        "The upgrade with a star is the most optimal and the lightest colour of green is the most optimal you can afford.")
+        "The upgrade with a star is the most optimal and the lightest color of green is the most optimal you can afford.")
     @ConfigEditorBoolean
     public boolean highlightUpgrades = true;
 
@@ -113,15 +144,10 @@ public class ChocolateFactoryConfig {
     public boolean timeTowerWarning = false;
 
     @Expose
-    @ConfigOption(name = "Time Tower Reminder", desc = "Notify a minute before the time tower ends.")
+    @ConfigOption(name = "Time Tower Expiry Reminder", desc = "Notify when the time tower ends and you have one or more remaining charges.")
     @ConfigEditorBoolean
     @FeatureToggle
     public boolean timeTowerReminder = true;
-
-    @Expose
-    @ConfigOption(name = "Upgrade Warnings", desc = "")
-    @Accordion
-    public ChocolateUpgradeWarningsConfig chocolateUpgradeWarnings = new ChocolateUpgradeWarningsConfig();
 
     @Expose
     @ConfigLink(owner = ChocolateFactoryConfig.class, field = "statsDisplay")
@@ -149,16 +175,6 @@ public class ChocolateFactoryConfig {
     public Position tooltipMovePosition = new Position(-380, 150, false, true);
 
     @Expose
-    @ConfigOption(name = "Hoppity Collection Stats", desc = "Show info about your Hoppity rabbit collection.")
-    @ConfigEditorBoolean
-    @FeatureToggle
-    public boolean hoppityCollectionStats = true;
-
-    @Expose
-    @ConfigLink(owner = ChocolateFactoryConfig.class, field = "hoppityCollectionStats")
-    public Position hoppityStatsPosition = new Position(163, 160, false, true);
-
-    @Expose
     @ConfigOption(name = "Leaderboard Change",
         desc = "Show the change of your chocolate leaderboard over time in chat.\n" +
             "This updates every time you first open the §e/cf §7menu on a new server."
@@ -174,46 +190,52 @@ public class ChocolateFactoryConfig {
     public boolean hoppityMenuShortcut = true;
 
     @Expose
-    @ConfigOption(name = "Highlight Requirement Rabbits", desc = "Highlight rabbits that have requirements.\n" +
-        "§cRed: Requirement not met.\n" +
-        "§aGreen: Requirement met.")
+    @ConfigOption(name = "Mythic Rabbit", desc = "Blocks running /cf without a §d§lMythic Rabbit Pet §7equipped.")
     @ConfigEditorBoolean
     @FeatureToggle
-    public boolean highlightRabbitsWithRequirement = false;
+    public boolean mythicRabbitRequirement = false;
+
+    @Expose
+    @ConfigOption(name = "Booster Cookie", desc = "Blocks running /cf without a §6§lBooster Cookie §7active.")
+    @ConfigEditorBoolean
+    @FeatureToggle
+    public boolean boosterCookieRequirement = false;
+
+    @Expose
+    @ConfigOption(name = "Stray Tracker", desc = "Track stray rabbits found in the Chocolate Factory menu.")
+    @ConfigEditorBoolean
+    @FeatureToggle
+    public boolean strayRabbitTracker = true;
+
+    @Expose
+    @ConfigLink(owner = ChocolateFactoryConfig.class, field = "strayRabbitTracker")
+    public Position strayRabbitTrackerPosition = new Position(300, 300, false, true);
 
     @Expose
     @ConfigOption(
-        name = "Show Missing Location Rabbits",
-        desc = "Show the locations you have yet to find enough egg locations for in order to unlock the rabbit for that location."
+        name = "Hitman Slot Rabbit",
+        desc = "Show the last rabbit found in hitman slots that are on cooldown."
     )
     @ConfigEditorBoolean
     @FeatureToggle
-    public boolean showLocationRequirementsRabbitsInHoppityStats = false;
+    public boolean hitmanSlotInfo = false;
 
     @Expose
-    @ConfigOption(name = "Only Requirement Not Met", desc = "Only highlight the rabbits you don't have the requirement for.")
+    @ConfigOption(name = "Hitman Costs", desc = "Show the sum cost of remaining hitman slots.")
     @ConfigEditorBoolean
     @FeatureToggle
-    public boolean onlyHighlightRequirementNotMet = true;
+    public boolean hitmanCosts = true;
 
     @Expose
-    @ConfigOption(name = "Rabbit Warning", desc = "")
-    @Accordion
-    public ChocolateFactoryRabbitWarningConfig rabbitWarning = new ChocolateFactoryRabbitWarningConfig();
+    @ConfigLink(owner = ChocolateFactoryConfig.class, field = "hitmanCosts")
+    public Position hitmanCostsPosition = new Position(300, 300, false, true);
 
     @Expose
-    @ConfigOption(name = "Chocolate Shop Price", desc = "")
-    @Accordion
-    public ChocolateShopPriceConfig chocolateShopPrice = new ChocolateShopPriceConfig();
-
-    @Expose
-    @ConfigOption(name = "Chocolate Factory Keybinds", desc = "")
-    @Accordion
-    public ChocolateFactoryKeybindsConfig keybinds = new ChocolateFactoryKeybindsConfig();
-
-    @Expose
-    @ConfigOption(name = "Chocolate Factory Custom Reminder", desc = "")
-    @Accordion
-    public ChocolateFactoryCustomReminderConfig customReminder = new ChocolateFactoryCustomReminderConfig();
-
+    @ConfigOption(
+        name = "§6CF §zParty Mode",
+        desc = "Don't turn this on."
+    )
+    @ConfigEditorBoolean
+    @FeatureToggle
+    public Property<Boolean> partyMode = Property.of(false);
 }
