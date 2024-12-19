@@ -782,7 +782,6 @@ interface Renderable {
         fun progressBarMultipleColors(
             percent: Double,
             colorRanges: List<ColorRange>,
-            texture: SkillProgressBarConfig.TexturedBar.UsedTexture? = null,
             width: Int = 182,
             height: Int = 5,
             horizontalAlign: HorizontalAlignment = HorizontalAlignment.LEFT,
@@ -796,86 +795,28 @@ interface Renderable {
             private val progress = (percent * width).toInt()
 
             override fun render(posX: Int, posY: Int) {
-                if (texture == null) {
-                    Gui.drawRect(posX, posY, posX + width, posY + height, 0xFF43464B.toInt())
+                Gui.drawRect(posX, posY, posX + width, posY + height, 0xFF43464B.toInt())
 
-                    val factor = 0.2
-                    Gui.drawRect(posX + 1, posY + 1, posX + width - 1, posY + height - 1, Color.GRAY.darker(factor).rgb)
+                val factor = 0.2
+                Gui.drawRect(posX + 1, posY + 1, posX + width - 1, posY + height - 1, Color.GRAY.darker(factor).rgb)
 
-                    var currentWidth = 1
-                    for (range in colorRanges) {
-                        if (range.isChroma) ChromaShaderManager.begin(ChromaType.STANDARD)
+                var currentWidth = 1
+                for (range in colorRanges) {
+                    if (range.isChroma) ChromaShaderManager.begin(ChromaType.STANDARD)
 
-                        val rangeStart = (range.startPercent * (width - 1)).toInt()
-                        val rangeEnd = (range.endPercent * (width - 1)).toInt()
-                        if (currentWidth >= progress) break
+                    val rangeStart = (range.startPercent * (width - 1)).toInt()
+                    val rangeEnd = (range.endPercent * (width - 1)).toInt()
+                    if (currentWidth >= progress) break
 
-                        val drawStart = maxOf(currentWidth, rangeStart)
-                        val drawEnd = minOf(rangeEnd, progress)
+                    val drawStart = maxOf(currentWidth, rangeStart)
+                    val drawEnd = minOf(rangeEnd, progress)
 
-                        if (drawStart < drawEnd) {
-                            Gui.drawRect(posX + drawStart, posY + 1, posX + drawEnd, posY + height - 1, range.color.rgb)
-                        }
-                        currentWidth = drawEnd
-
-                        if (range.isChroma) ChromaShaderManager.end()
+                    if (drawStart < drawEnd) {
+                        Gui.drawRect(posX + drawStart, posY + 1, posX + drawEnd, posY + height - 1, range.color.rgb)
                     }
-                } else {
-                    val (textureX, textureY) = if (texture == SkillProgressBarConfig.TexturedBar.UsedTexture.MATCH_PACK) {
-                        Pair(0, 64)
-                    } else {
-                        Pair(0, 0)
-                    }
+                    currentWidth = drawEnd
 
-                    Minecraft.getMinecraft().renderEngine.bindTexture(ResourceLocation(texture.path))
-                    Minecraft.getMinecraft().ingameGUI.drawTexturedModalRect(
-                        posX, posY, textureX, textureY, width, height
-                    )
-
-                    var currentWidth = 1
-                    for (range in colorRanges) {
-                        if (range.isChroma) ChromaShaderManager.begin(ChromaType.TEXTURED)
-
-                        val rangeStart = (range.startPercent * (width - 2)).toInt()
-                        val rangeEnd = (range.endPercent * (width - 2)).toInt()
-                        if (currentWidth >= progress) break
-
-
-                        val drawEnd = minOf(rangeEnd, progress)
-                        if (range.isChroma) {
-                            GlStateManager.color(1f, 1f, 1f, 1f)
-                        } else {
-                            GlStateManager.color(
-                                range.color.red / 255f,
-                                range.color.green / 255f,
-                                range.color.blue / 255f,
-                                1f
-                            )
-                        }
-
-                        if (rangeStart < currentWidth) {
-                            Minecraft.getMinecraft().ingameGUI.drawTexturedModalRect(
-                                posX + currentWidth,
-                                posY + 1,
-                                textureX + currentWidth,
-                                textureY + height,
-                                drawEnd - currentWidth,
-                                height - 2
-                            )
-                        } else {
-                            Minecraft.getMinecraft().ingameGUI.drawTexturedModalRect(
-                                posX + rangeStart,
-                                posY + 1,
-                                textureX + rangeStart,
-                                textureY + height,
-                                drawEnd - rangeStart,
-                                height - 2
-                            )
-                        }
-                        currentWidth = drawEnd
-
-                        if (range.isChroma) ChromaShaderManager.end()
-                    }
+                    if (range.isChroma) ChromaShaderManager.end()
                 }
             }
         }
