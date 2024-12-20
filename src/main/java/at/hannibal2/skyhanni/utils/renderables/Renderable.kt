@@ -772,16 +772,9 @@ interface Renderable {
             }
         }
 
-        data class ColorRange(
-            val startPercent: Double,
-            val endPercent: Double,
-            val color: Color,
-            val isChroma: Boolean = false,
-        )
-
         fun progressBarMultipleColors(
             percent: Double,
-            colorRanges: List<ColorRange>,
+            colorRanges: List<ColorUtils.ColorRange>,
             width: Int = 182,
             height: Int = 5,
             horizontalAlign: HorizontalAlignment = HorizontalAlignment.LEFT,
