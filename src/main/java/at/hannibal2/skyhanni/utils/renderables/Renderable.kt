@@ -796,9 +796,7 @@ interface Renderable {
 
             override fun render(posX: Int, posY: Int) {
                 Gui.drawRect(posX, posY, posX + width, posY + height, 0xFF43464B.toInt())
-
-                val factor = 0.2
-                Gui.drawRect(posX + 1, posY + 1, posX + width - 1, posY + height - 1, Color.GRAY.darker(factor).rgb)
+                Gui.drawRect(posX + 1, posY + 1, posX + width - 1, posY + height - 1, Color.GRAY.darker(0.2).rgb)
 
                 var currentWidth = 1
                 for (range in colorRanges) {
