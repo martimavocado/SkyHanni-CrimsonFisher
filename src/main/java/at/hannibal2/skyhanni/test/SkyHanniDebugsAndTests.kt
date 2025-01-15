@@ -33,6 +33,7 @@ import at.hannibal2.skyhanni.utils.ItemUtils.getInternalName
 import at.hannibal2.skyhanni.utils.ItemUtils.getInternalNameOrNull
 import at.hannibal2.skyhanni.utils.ItemUtils.getItemCategoryOrNull
 import at.hannibal2.skyhanni.utils.ItemUtils.getItemRarityOrNull
+import at.hannibal2.skyhanni.utils.ItemUtils.getRawBaseStats
 import at.hannibal2.skyhanni.utils.ItemUtils.itemName
 import at.hannibal2.skyhanni.utils.KeyboardManager.isKeyHeld
 import at.hannibal2.skyhanni.utils.LocationUtils
@@ -340,7 +341,7 @@ object SkyHanniDebugsAndTests {
     }
 
     fun debugVersion() {
-        val name = "SkyHanni ${SkyHanniMod.version}"
+        val name = "SkyHanni ${SkyHanniMod.VERSION}"
         ChatUtils.chat("§eYou are using $name")
         OSUtils.copyToClipboard(name)
     }
@@ -401,7 +402,7 @@ object SkyHanniDebugsAndTests {
         ChatUtils.chat(result.joinToString("\n"), prefix = false)
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onKeybind(event: GuiKeyPressEvent) {
         if (!debugConfig.copyInternalName.isKeyHeld()) return
         val focussedSlot = event.guiContainer.slotUnderMouse ?: return
@@ -453,6 +454,22 @@ object SkyHanniDebugsAndTests {
     }
 
     @SubscribeEvent
+    fun onShowBaseStats(event: LorenzToolTipEvent) {
+        if (!LorenzUtils.inSkyBlock) return
+        if (!debugConfig.showBaseValues) return
+        val internalName = event.itemStack.getInternalNameOrNull() ?: return
+
+        val stats = internalName.getRawBaseStats()
+        if (stats.isEmpty()) return
+
+        event.toolTip.add("§7Base stats:")
+        for ((name, value) in stats) {
+
+            event.toolTip.add("§7$name: $value")
+        }
+    }
+
+    @SubscribeEvent
     fun onShowCraftPrice(event: LorenzToolTipEvent) {
         if (!LorenzUtils.inSkyBlock) return
         if (!debugConfig.showCraftPrice) return
@@ -494,11 +511,11 @@ object SkyHanniDebugsAndTests {
     fun onChat(event: LorenzChatEvent) {
     }
 
-    @SubscribeEvent
+    @HandleEvent
+    @Suppress("ConstantConditionIf")
     fun onRenderOverlay(event: GuiRenderEvent.GuiOverlayRenderEvent) {
         if (!LorenzUtils.inSkyBlock) return
 
-        @Suppress("ConstantConditionIf")
         if (false) {
             itemRenderDebug()
         }
@@ -532,9 +549,9 @@ object SkyHanniDebugsAndTests {
         config.debugPos.renderStringsAndItems(displayList, posLabel = "Test Display")
     }
 
-    @SubscribeEvent
-    fun onGuiRenderChestGuiOverlayRender(event: GuiRenderEvent.ChestGuiOverlayRenderEvent) {
-        @Suppress("ConstantConditionIf")
+    @HandleEvent
+    @Suppress("ConstantConditionIf")
+    fun onBackgroundDraw(event: GuiRenderEvent.ChestGuiOverlayRenderEvent) {
         if (false) {
             dragAbleTest()
         }
@@ -634,7 +651,7 @@ object SkyHanniDebugsAndTests {
 //        println("offset: $offset")
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigFix(event: ConfigUpdaterMigrator.ConfigFixEvent) {
         event.move(3, "dev.debugEnabled", "dev.debug.enabled")
         event.move(3, "dev.showInternalName", "dev.debug.showInternalName")

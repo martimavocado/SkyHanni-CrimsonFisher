@@ -1,6 +1,7 @@
 package at.hannibal2.skyhanni.features.mining.glacitemineshaft
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.data.IslandType
 import at.hannibal2.skyhanni.data.PartyAPI
 import at.hannibal2.skyhanni.data.hypixel.chat.event.PartyChatEvent
@@ -89,7 +90,7 @@ object CorpseLocator {
         sharedWaypoints.clear()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onSecondPassed(event: SecondPassedEvent) {
         if (!isEnabled()) return
 
@@ -101,12 +102,12 @@ object CorpseLocator {
         shareCorpse()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onPartyChat(event: PartyChatEvent) {
         handleChatEvent(event.author, event.message)
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onAllChat(event: PlayerAllChatEvent) {
         handleChatEvent(event.author, event.message)
     }

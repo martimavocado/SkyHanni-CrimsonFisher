@@ -37,6 +37,7 @@ import at.hannibal2.skyhanni.utils.HypixelCommands
 import at.hannibal2.skyhanni.utils.InventoryUtils.getAmountInInventory
 import at.hannibal2.skyhanni.utils.ItemBlink
 import at.hannibal2.skyhanni.utils.ItemPriceUtils.getPrice
+import at.hannibal2.skyhanni.utils.ItemPriceUtils.isAuctionHouseItem
 import at.hannibal2.skyhanni.utils.ItemUtils
 import at.hannibal2.skyhanni.utils.ItemUtils.getInternalName
 import at.hannibal2.skyhanni.utils.ItemUtils.getLore
@@ -124,12 +125,12 @@ object GardenVisitorFeatures {
     private var lastFullPrice = 0.0
     private val greenThumb = "GREEN_THUMB;1".toInternalName()
 
-    @SubscribeEvent
+    @HandleEvent
     fun onProfileJoin(event: ProfileJoinEvent) {
         display = emptyList()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onVisitorOpen(event: VisitorOpenEvent) {
         val visitor = event.visitor
         val offerItem = visitor.offer?.offerItem ?: return
@@ -225,8 +226,11 @@ object GardenVisitorFeatures {
                         } else {
                             if (internalName.isBazaarItem()) {
                                 BazaarApi.searchForBazaarItem(name, amount)
-                            } else {
+                            } else if (internalName.isAuctionHouseItem()) {
                                 HypixelCommands.auctionSearch(name.removeColor())
+                            } else {
+                                val itemName = internalName.itemName
+                                ChatUtils.chat("Could not find $itemName§e on AH or BZ!", replaceSameMessage = true)
                             }
                         }
                     },
@@ -344,7 +348,7 @@ object GardenVisitorFeatures {
         add(list)
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onOwnInventoryItemUpdate(event: OwnInventoryItemUpdateEvent) {
         if (GardenAPI.onBarnPlot) {
             update()
@@ -356,22 +360,22 @@ object GardenVisitorFeatures {
         update()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onVisitorRefused(event: VisitorRefusedEvent) {
         update()
         GardenVisitorDropStatistics.deniedVisitors += 1
         GardenVisitorDropStatistics.saveAndUpdate()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onVisitorAccepted(event: VisitorAcceptedEvent) {
-        VisitorAcceptEvent(event.visitor).postAndCatch()
+        VisitorAcceptEvent(event.visitor).post()
         update()
         GardenVisitorDropStatistics.coinsSpent += round(lastFullPrice).toLong()
         GardenVisitorDropStatistics.lastAccept = SimpleTimeMark.now()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onVisitorRender(event: VisitorRenderEvent) {
         val visitor = event.visitor
         val text = visitor.status.displayName
@@ -516,7 +520,7 @@ object GardenVisitorFeatures {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onVisitorArrival(event: VisitorArrivalEvent) {
         val visitor = event.visitor
         val name = visitor.visitorName
@@ -652,7 +656,7 @@ object GardenVisitorFeatures {
 
     private fun hideExtraGuis() = GardenAPI.hideExtraGuis() && !VisitorAPI.inInventory
 
-    @SubscribeEvent
+    @HandleEvent
     fun onRenderOverlay(event: GuiRenderEvent) {
         if (!config.shoppingList.display) return
 
@@ -679,8 +683,8 @@ object GardenVisitorFeatures {
         return false
     }
 
-    @SubscribeEvent
-    fun onDebugDataCollect(event: DebugDataCollectEvent) {
+    @HandleEvent
+    fun onDebug(event: DebugDataCollectEvent) {
         event.title("Garden Visitor Stats")
 
         if (!GardenAPI.inGarden()) {
@@ -707,7 +711,7 @@ object GardenVisitorFeatures {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigFix(event: ConfigUpdaterMigrator.ConfigFixEvent) {
         event.move(3, "garden.visitorNeedsDisplay", "garden.visitors.needs.display")
         event.move(3, "garden.visitorNeedsPos", "garden.visitors.needs.pos")

@@ -1,6 +1,7 @@
 package at.hannibal2.skyhanni.features.fame
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.config.ConfigUpdaterMigrator
 import at.hannibal2.skyhanni.data.EntityMovementData
 import at.hannibal2.skyhanni.data.IslandGraphs
@@ -81,7 +82,7 @@ object UpgradeReminder {
     private var lastReminderSend = SimpleTimeMark.farPast()
 
     // TODO: (for 0.27) merge this logic with reminder manager
-    @SubscribeEvent
+    @HandleEvent
     fun onSecondPassed(event: SecondPassedEvent) {
         if (!isEnabled()) return
         if (ReminderUtils.isBusy()) return
@@ -94,8 +95,8 @@ object UpgradeReminder {
         lastReminderSend = SimpleTimeMark.now()
     }
 
-    @SubscribeEvent
-    fun onInventoryOpen(event: InventoryFullyOpenedEvent) {
+    @HandleEvent
+    fun onInventoryFullyOpened(event: InventoryFullyOpenedEvent) {
         if (!LorenzUtils.inSkyBlock) return
         inInventory = event.inventoryName == "Community Shop"
         if (!inInventory) return
@@ -130,12 +131,12 @@ object UpgradeReminder {
         return false
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onInventoryClose(event: InventoryCloseEvent) {
         inInventory = false
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onSlotClick(event: GuiContainerEvent.SlotClickEvent) {
         if (!inInventory) return
         val item = event.item ?: return
@@ -167,7 +168,7 @@ object UpgradeReminder {
 
     private fun isEnabled() = LorenzUtils.inSkyBlock && config.accountUpgradeReminder
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigFix(event: ConfigUpdaterMigrator.ConfigFixEvent) {
         event.move(
             49,

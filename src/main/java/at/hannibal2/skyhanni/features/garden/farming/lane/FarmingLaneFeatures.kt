@@ -56,7 +56,7 @@ object FarmingLaneFeatures {
         display = emptyList()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onGardenToolChange(event: GardenToolChangeEvent) {
         display = emptyList()
     }
@@ -210,7 +210,7 @@ object FarmingLaneFeatures {
 
     private fun LorenzVec.capAtBuildHeight(): LorenzVec = if (y > 76) copy(y = 76.0) else this
 
-    @SubscribeEvent
+    @HandleEvent
     fun onRenderOverlay(event: GuiRenderEvent.GuiOverlayRenderEvent) {
         if (!GardenAPI.inGarden()) return
         if (!config.distanceDisplay) return

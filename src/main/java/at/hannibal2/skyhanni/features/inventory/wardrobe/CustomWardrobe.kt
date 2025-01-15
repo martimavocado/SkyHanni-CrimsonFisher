@@ -1,6 +1,7 @@
 package at.hannibal2.skyhanni.features.inventory.wardrobe
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.config.core.config.Position
 import at.hannibal2.skyhanni.events.ConfigLoadEvent
 import at.hannibal2.skyhanni.events.GuiContainerEvent
@@ -37,7 +38,6 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.inventory.GuiContainer
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.item.ItemStack
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import java.awt.Color
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
@@ -57,7 +57,7 @@ object CustomWardrobe {
     private var lastScreenSize: Pair<Int, Int>? = null
     private const val GUI_NAME = "Custom Wardrobe"
 
-    @SubscribeEvent
+    @HandleEvent
     fun onGuiRender(event: GuiContainerEvent.PreDraw) {
         if (!isEnabled() || editMode) return
         val renderable = displayRenderable ?: run {
@@ -103,8 +103,8 @@ object CustomWardrobe {
     }
 
     // Edit button in normal wardrobe while in edit mode
-    @SubscribeEvent
-    fun onRenderOverlay(event: GuiRenderEvent.ChestGuiOverlayRenderEvent) {
+    @HandleEvent
+    fun onBackgroundDraw(event: GuiRenderEvent.ChestGuiOverlayRenderEvent) {
         if (!isEnabled()) return
         if (!editMode) return
         val gui = Minecraft.getMinecraft().currentScreen as? GuiContainer ?: return
@@ -115,7 +115,7 @@ object CustomWardrobe {
         Position(posX, posY).setIgnoreCustomScale(true).renderRenderable(renderable, posLabel = GUI_NAME, addToGuiManager = false)
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onInventoryClose(event: InventoryCloseEvent) {
         waitingForInventoryUpdate = false
         DelayedRun.runDelayed(300.milliseconds) {
@@ -125,8 +125,8 @@ object CustomWardrobe {
         }
     }
 
-    @SubscribeEvent
-    fun onConfigUpdate(event: ConfigLoadEvent) {
+    @HandleEvent
+    fun onConfigLoad(event: ConfigLoadEvent) {
         with(config.spacing) {
             ConditionalUtils.onToggle(
                 globalScale, outlineThickness, outlineBlur,
@@ -141,8 +141,8 @@ object CustomWardrobe {
         }
     }
 
-    @SubscribeEvent
-    fun onInventoryUpdate(event: InventoryUpdatedEvent) {
+    @HandleEvent
+    fun onInventoryUpdated(event: InventoryUpdatedEvent) {
         if (!isEnabled() || editMode) return
         DelayedRun.runNextTick {
             update()
@@ -270,8 +270,11 @@ object CustomWardrobe {
         val fakePlayer = FakePlayer()
         var scale = playerWidth
 
-        fakePlayer.inventory.armorInventory =
-            slot.armor.map { it?.copy()?.removeEnchants() }.reversed().toTypedArray()
+        //#if MC < 1.12
+        fakePlayer.inventory.armorInventory = slot.armor.map { it?.copy()?.removeEnchants() }.reversed().toTypedArray()
+        //#else
+        //$$ fakePlayer.inventory.armorInventory.addAll(slot.armor.map { it?.copy()?.removeEnchants() }.reversed())
+        //#endif
 
         val playerColor = if (!slot.isInCurrentPage()) {
             scale *= 0.9

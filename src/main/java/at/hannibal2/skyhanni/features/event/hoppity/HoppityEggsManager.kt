@@ -214,7 +214,7 @@ object HoppityEggsManager {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onSecondPassed(event: SecondPassedEvent) {
         if (!isActive()) return
         HoppityEggType.checkClaimed()
@@ -252,12 +252,12 @@ object HoppityEggsManager {
                 actionName = actionName,
                 action = action,
             )
-        } else ChatUtils.chat(message)
+        } else ChatUtils.chat(message, replaceSameMessage = true)
         LorenzUtils.sendTitle("§e$amount Hoppity Eggs!", 5.seconds)
         SoundUtils.repeatSound(100, 10, SoundUtils.plingSound)
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigFix(event: ConfigUpdaterMigrator.ConfigFixEvent) {
         event.move(
             44,

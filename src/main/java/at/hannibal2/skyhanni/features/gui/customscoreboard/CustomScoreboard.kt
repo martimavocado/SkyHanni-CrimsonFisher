@@ -10,6 +10,7 @@
 package at.hannibal2.skyhanni.features.gui.customscoreboard
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.config.enums.OutsideSbFeature
 import at.hannibal2.skyhanni.data.IslandType
 import at.hannibal2.skyhanni.data.ScoreboardData
@@ -40,6 +41,7 @@ import at.hannibal2.skyhanni.utils.StringUtils.firstLetterUppercase
 import at.hannibal2.skyhanni.utils.TabListData
 import at.hannibal2.skyhanni.utils.renderables.Renderable
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -53,13 +55,16 @@ object CustomScoreboard {
     var currentIslandEvents = listOf<ScoreboardEvent>()
         private set
 
+    var activePatterns = listOf<Pattern>()
+        private set
+
     private const val GUI_NAME = "Custom Scoreboard"
 
     private var nextScoreboardUpdate = SimpleTimeMark.farFuture()
 
     private var dirty = false
 
-    @SubscribeEvent
+    @HandleEvent
     fun onRenderOverlay(event: GuiRenderEvent.GuiOverlayRenderEvent) {
         if (!isEnabled()) return
         display ?: return
@@ -78,7 +83,7 @@ object CustomScoreboard {
         config.position.renderRenderable(finalRenderable, posLabel = GUI_NAME)
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onGuiPositionMoved(event: GuiPositionMovedEvent) {
         if (event.guiName == GUI_NAME) {
             with(alignmentConfig) {
@@ -116,10 +121,11 @@ object CustomScoreboard {
         }
 
         // Remove Known Lines, so we can get the unknown ones
-        if (LorenzUtils.inSkyBlock && displayConfig.useCustomLines) UnknownLinesHandler.handleUnknownLines()
+        if (LorenzUtils.inSkyBlock && displayConfig.useCustomLines && LorenzUtils.lastWorldSwitch.passedSince() > 5.seconds)
+            UnknownLinesHandler.handleUnknownLines()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onScoreboardChange(event: ScoreboardUpdateEvent) {
         dirty = true
     }
@@ -181,7 +187,7 @@ object CustomScoreboard {
         takeIf { !informationFilteringConfig.hideEmptyLinesAtTopAndBottom }
             ?: dropWhile { it.display.isBlank() }.dropLastWhile { it.display.isBlank() }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigLoad(event: ConfigLoadEvent) {
         ConditionalUtils.onToggle(
             config.scoreboardEntries,
@@ -198,7 +204,7 @@ object CustomScoreboard {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onIslandChange(event: IslandChangeEvent) {
         if (event.newIsland != IslandType.NONE) updateIslandEntries()
     }
@@ -206,10 +212,16 @@ object CustomScoreboard {
     private fun updateIslandEntries() {
         currentIslandEntries = config.scoreboardEntries.get().map { it.element }.filter { it.showIsland() }
         currentIslandEvents = eventsConfig.eventEntries.get().map { it.event }.filter { it.showIsland() }
+
+        activePatterns = (ScoreboardConfigElement.getElements() + ScoreboardConfigEventElement.getEvents())
+            .filter { it.showIsland() }
+            .flatMap { it.elementPatterns }
+            .distinct()
+        activePatterns += ScoreboardPattern.brokenPatterns
     }
 
-    @SubscribeEvent
-    fun onDebugDataCollect(event: DebugDataCollectEvent) {
+    @HandleEvent
+    fun onDebug(event: DebugDataCollectEvent) {
         event.title("Custom Scoreboard")
         event.addIrrelevant {
             if (!config.enabled.get()) {
@@ -220,6 +232,9 @@ object CustomScoreboard {
 
                 add("Custom Scoreboard Events:")
                 addAll(formatEntriesDebug(eventsConfig.eventEntries.get().map { it.name to it.event }, currentIslandEvents))
+
+                add("Active Patterns:")
+                activePatterns.forEach { add("   $it") }
 
                 allUnknownLines.takeIfNotEmpty()?.let { set ->
                     add("Recent Unknown Lines:")

@@ -2,6 +2,7 @@ package at.hannibal2.skyhanni.features.dungeon
 
 import at.hannibal2.skyhanni.SkyHanniMod
 import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.data.IslandType
 import at.hannibal2.skyhanni.data.mob.Mob
 import at.hannibal2.skyhanni.events.CheckRenderEntityEvent
 import at.hannibal2.skyhanni.events.ConfigLoadEvent
@@ -58,7 +59,7 @@ object DungeonLividFinder {
 
     private var color: LorenzColor? = null
 
-    @SubscribeEvent
+    @HandleEvent
     fun onMobSpawn(event: MobEvent.Spawn.SkyblockMob) {
         if (!inLividBossRoom()) return
         val mob = event.mob
@@ -101,7 +102,7 @@ object DungeonLividFinder {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onBlockChange(event: ServerBlockChangeEvent) {
         if (!inLividBossRoom()) return
         if (event.location != blockLocation) return
@@ -142,7 +143,7 @@ object DungeonLividFinder {
         color = LorenzColor.RED
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onBossEnd(event: DungeonCompleteEvent) {
         color = null
         livid = null
@@ -150,8 +151,8 @@ object DungeonLividFinder {
         fakeLivids.clear()
     }
 
-    @SubscribeEvent
-    fun onMobDeSpawn(event: MobEvent.DeSpawn.SkyblockMob) {
+    @HandleEvent
+    fun onMobDespawn(event: MobEvent.DeSpawn.SkyblockMob) {
         when (event.mob) {
             livid -> livid = null
             in fakeLivids -> fakeLivids -= event.mob
@@ -164,8 +165,8 @@ object DungeonLividFinder {
         lividArmorStandId = null
     }
 
-    @SubscribeEvent
-    fun onCheckRender(event: CheckRenderEntityEvent<*>) {
+    @HandleEvent(onlyOnIsland = IslandType.CATACOMBS)
+    fun onCheckRender(event: CheckRenderEntityEvent<Entity>) {
         if (!inLividBossRoom() || !config.hideWrong) return
         if (livid == null && lividArmorStandId == null) return // in case livid detection fails, don't hide anything
         if (event.entity.mob in fakeLivids) event.cancel()

@@ -1,5 +1,6 @@
 package at.hannibal2.skyhanni.features.event.hoppity
 
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.config.features.event.hoppity.HoppityEggsConfig.UnclaimedEggsOrder.SOONEST_FIRST
 import at.hannibal2.skyhanni.data.mob.MobFilter.isRealPlayer
 import at.hannibal2.skyhanni.events.GuiRenderEvent
@@ -7,6 +8,7 @@ import at.hannibal2.skyhanni.events.SecondPassedEvent
 import at.hannibal2.skyhanni.events.SkyHanniRenderEntityEvent
 import at.hannibal2.skyhanni.events.render.EntityRenderLayersEvent
 import at.hannibal2.skyhanni.features.fame.ReminderUtils
+import at.hannibal2.skyhanni.features.inventory.chocolatefactory.ChocolateFactoryAPI.partyModeReplace
 import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
 import at.hannibal2.skyhanni.utils.HypixelCommands
 import at.hannibal2.skyhanni.utils.LocationUtils.distanceTo
@@ -17,7 +19,6 @@ import at.hannibal2.skyhanni.utils.renderables.Renderable
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.entity.EntityLivingBase
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.opengl.GL11
 
 @SkyHanniModule
@@ -36,7 +37,7 @@ object HoppityEggDisplayManager {
         return config.playerOpacity < 100
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onPreRenderPlayer(event: SkyHanniRenderEntityEvent.Pre<EntityLivingBase>) {
         if (!canChangeOpacity(event.entity)) return
 
@@ -51,7 +52,7 @@ object HoppityEggDisplayManager {
         GlStateManager.color(1.0f, 1.0f, 1.0f, config.playerOpacity / 100f)
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onPostRenderPlayer(event: SkyHanniRenderEntityEvent.Post<EntityLivingBase>) {
         if (!canChangeOpacity(event.entity)) return
 
@@ -59,14 +60,14 @@ object HoppityEggDisplayManager {
         GlStateManager.disableBlend()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onRenderPlayerLayers(event: EntityRenderLayersEvent.Pre<EntityLivingBase>) {
         if (!canChangeOpacity(event.entity)) return
         if (!shouldHidePlayer) return
         event.cancel()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onSecondPassed(event: SecondPassedEvent) {
         display = updateDisplay()
     }
@@ -93,7 +94,7 @@ object HoppityEggDisplayManager {
                 val collectedFormat = formatEggsCollected(collectedEggs)
                 add("§7Locations: $collectedFormat$collectedEggs§7/§a$totalEggs")
             }
-        }
+        }.map { it.partyModeReplace() }
 
         if (displayList.size == 1) return emptyList()
 
@@ -108,7 +109,7 @@ object HoppityEggDisplayManager {
     }
 
 
-    @SubscribeEvent
+    @HandleEvent
     fun onRenderOverlay(event: GuiRenderEvent) {
         if (!HoppityEggsManager.isActive()) return
         config.position.renderRenderables(display, posLabel = "Hoppity Eggs")

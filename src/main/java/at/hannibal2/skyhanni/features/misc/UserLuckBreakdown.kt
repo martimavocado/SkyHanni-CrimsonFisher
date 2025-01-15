@@ -1,6 +1,7 @@
 package at.hannibal2.skyhanni.features.misc
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.data.ProfileStorageData
 import at.hannibal2.skyhanni.events.GuiContainerEvent
 import at.hannibal2.skyhanni.events.InventoryCloseEvent
@@ -71,7 +72,7 @@ object UserLuckBreakdown {
 
     private val skillOverflowLuck = mutableMapOf<SkillType, Int>()
 
-    @SubscribeEvent
+    @HandleEvent
     fun replaceItem(event: ReplaceItemEvent) {
         if (!config.userluckEnabled) return
         if (event.inventory !is ContainerLocalMenu) return
@@ -103,7 +104,7 @@ object UserLuckBreakdown {
             10 -> event.replace(skillsItem)
             11 -> event.replace(limboItem)
 
-            in validItemSlots -> event.replace(null)
+            in validItemSlots -> event.remove()
 
             in invalidItemSlots -> {
                 if (event.originalItem.item == limboID.getItemStack().item) return
@@ -113,8 +114,8 @@ object UserLuckBreakdown {
         }
     }
 
-    @SubscribeEvent
-    fun openInventory(event: InventoryOpenEvent) {
+    @HandleEvent
+    fun onInventoryOpen(event: InventoryOpenEvent) {
         if (event.inventoryName != "Your Stats Breakdown") {
             inMiscStats = false
             return
@@ -135,8 +136,8 @@ object UserLuckBreakdown {
         return
     }
 
-    @SubscribeEvent
-    fun closeInventory(event: InventoryCloseEvent) {
+    @HandleEvent
+    fun onInventoryClose(event: InventoryCloseEvent) {
         inMiscStats = false
         inCustomBreakdown = false
     }
@@ -214,8 +215,8 @@ object UserLuckBreakdown {
         else string
     }
 
-    @SubscribeEvent
-    fun onStackClick(event: GuiContainerEvent.SlotClickEvent) {
+    @HandleEvent
+    fun onSlotClick(event: GuiContainerEvent.SlotClickEvent) {
         if (!config.userluckEnabled) return
         if (!inMiscStats) return
         val limboUserLuck = storage?.limbo?.userLuck ?: 0.0f

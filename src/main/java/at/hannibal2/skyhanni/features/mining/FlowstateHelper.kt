@@ -74,7 +74,7 @@ object FlowstateHelper {
         createDisplay()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onRenderOverlay(event: GuiRenderEvent.GuiOverlayRenderEvent) {
         if (!MiningAPI.inCustomMiningIsland() || !config.enabled) return
         if (flowstateCache == null && !streakEndTimer.isInFuture()) return
@@ -118,12 +118,12 @@ object FlowstateHelper {
         } else blockBreakStreak * flowstateLevel
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onChangeItem(event: ItemInHandChangeEvent) {
         hasFlowstate()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onIslandChange(event: IslandChangeEvent) {
         streakEndTimer = SimpleTimeMark.farPast()
         attemptClearDisplay()

@@ -1,5 +1,6 @@
 package at.hannibal2.skyhanni.api
 
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.data.ItemAddManager
 import at.hannibal2.skyhanni.events.CollectionUpdateEvent
 import at.hannibal2.skyhanni.events.InventoryFullyOpenedEvent
@@ -19,7 +20,6 @@ import at.hannibal2.skyhanni.utils.RegexUtils.firstMatcher
 import at.hannibal2.skyhanni.utils.RegexUtils.matches
 import at.hannibal2.skyhanni.utils.StringUtils.removeColor
 import at.hannibal2.skyhanni.utils.repopatterns.RepoPattern
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 @SkyHanniModule
 object CollectionAPI {
@@ -35,10 +35,11 @@ object CollectionAPI {
 
     /**
      * REGEX-TEST: §7Total collected: §e261,390
+     * REGEX-TEST: §7Total Collected: §e2,012,418
      */
     private val singleCounterPattern by patternGroup.pattern(
         "singlecounter",
-        "§7Total collected: §e(?<amount>.*)",
+        "§7Total [c|C]ollected: §e(?<amount>.*)",
     )
 
     /**
@@ -56,13 +57,13 @@ object CollectionAPI {
         "Mushroom" to "RED_MUSHROOM".toInternalName(),
     )
 
-    @SubscribeEvent
+    @HandleEvent
     fun onProfileJoin(event: ProfileJoinEvent) {
         collectionValue.clear()
     }
 
-    @SubscribeEvent
-    fun onInventoryOpen(event: InventoryFullyOpenedEvent) {
+    @HandleEvent
+    fun onInventoryFullyOpened(event: InventoryFullyOpenedEvent) {
         val inventoryName = event.inventoryName
         if (inventoryName.endsWith(" Collection")) {
             val stack = event.inventoryItems[4] ?: return
@@ -99,7 +100,7 @@ object CollectionAPI {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onItemAdd(event: ItemAddEvent) {
         if (event.source == ItemAddManager.Source.COMMAND) return
         val internalName = event.internalName

@@ -1,5 +1,6 @@
 package at.hannibal2.skyhanni.features.inventory.chocolatefactory
 
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.events.GuiContainerEvent
 import at.hannibal2.skyhanni.events.RenderInventoryItemTipEvent
 import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
@@ -10,7 +11,6 @@ import at.hannibal2.skyhanni.utils.LorenzColor
 import at.hannibal2.skyhanni.utils.RegexUtils.firstMatcher
 import at.hannibal2.skyhanni.utils.RenderUtils.drawSlotText
 import at.hannibal2.skyhanni.utils.RenderUtils.highlight
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 @SkyHanniModule
 object ChocolateFactoryInventory {
@@ -26,7 +26,7 @@ object ChocolateFactoryInventory {
         "§7§aYou have \\d+ unclaimed rewards?!",
     )
 
-    @SubscribeEvent
+    @HandleEvent
     fun onForegroundDrawn(event: GuiContainerEvent.ForegroundDrawnEvent) {
         if (!ChocolateFactoryAPI.inChocolateFactory) return
         if (!config.highlightUpgrades) return
@@ -42,7 +42,7 @@ object ChocolateFactoryInventory {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onBackgroundDrawn(event: GuiContainerEvent.BackgroundDrawnEvent) {
         if (!ChocolateFactoryAPI.inChocolateFactory) return
         if (!config.highlightUpgrades) return
@@ -64,9 +64,6 @@ object ChocolateFactoryInventory {
             if (slotIndex == ChocolateFactoryAPI.barnIndex && ChocolateFactoryBarnManager.barnFull) {
                 slot highlight LorenzColor.RED
             }
-            if (slotIndex == ChocolateFactoryAPI.clickRabbitSlot) {
-                slot highlight LorenzColor.RED
-            }
             if (slotIndex == ChocolateFactoryAPI.milestoneIndex) {
                 unclaimedRewardsPattern.firstMatcher(slot.stack?.getLore().orEmpty()) {
                     slot highlight LorenzColor.RED
@@ -83,7 +80,7 @@ object ChocolateFactoryInventory {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onRenderItemTip(event: RenderInventoryItemTipEvent) {
         if (!ChocolateFactoryAPI.inChocolateFactory) return
         if (!config.showStackSizes) return
@@ -92,7 +89,7 @@ object ChocolateFactoryInventory {
         event.stackTip = upgradeInfo.stackTip()
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onSlotClick(event: GuiContainerEvent.SlotClickEvent) {
         if (!ChocolateFactoryAPI.inChocolateFactory) return
         val slot = event.slot ?: return
@@ -103,7 +100,7 @@ object ChocolateFactoryInventory {
         ) return
 
         // this would break ChocolateFactoryKeybinds otherwise
-        if (event.clickTypeEnum == GuiContainerEvent.ClickType.HOTBAR) return
+        if (event.clickType == GuiContainerEvent.ClickType.HOTBAR) return
 
         // if the user is holding shift, we don't want to pickblock, handled by hypixel as +10 levels for rabbits
         if (KeyboardManager.isShiftKeyDown() && slotNumber in ChocolateFactoryAPI.rabbitSlots.keys) return

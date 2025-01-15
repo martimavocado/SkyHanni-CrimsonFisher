@@ -1,6 +1,7 @@
 package at.hannibal2.skyhanni.features.mining.eventtracker
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.config.ConfigManager
 import at.hannibal2.skyhanni.config.ConfigUpdaterMigrator
 import at.hannibal2.skyhanni.data.BossbarData
@@ -85,7 +86,7 @@ object MiningEventTracker {
         lastSentEvent = null
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onBossbarChange(event: BossbarUpdateEvent) {
         if (!isMiningIsland()) return
         if (LorenzUtils.lastWorldSwitch.passedSince() < 5.seconds) return
@@ -113,7 +114,7 @@ object MiningEventTracker {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onSecondPassed(event: SecondPassedEvent) {
         if (!config.enabled) return
         if (!LorenzUtils.inSkyBlock || (!config.outsideMining && !isMiningIsland())) return
@@ -123,6 +124,9 @@ object MiningEventTracker {
     }
 
     private fun sendData(eventName: String, time: String?) {
+        // Option to opt out of data sending
+        if (!config.allowDataSharing) return
+
         // we now ignore mineshaft events.
         if (IslandType.MINESHAFT.isInIsland()) return
         // TODO fix this via regex
@@ -197,7 +201,7 @@ object MiningEventTracker {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onIslandChange(event: IslandChangeEvent) {
         if (apiError) {
             canRequestAt = SimpleTimeMark.now()
@@ -227,7 +231,7 @@ object MiningEventTracker {
                     ChatUtils.chat(
                         "§cFailed loading Mining Event data!\n" +
                             "§cPlease wait until the server-problem fixes itself! There is nothing else to do at the moment.",
-                        replaceSameMessage = true,
+                        onlySendOnce = true
                     )
                 } else {
                     ErrorManager.logErrorWithData(
@@ -247,7 +251,7 @@ object MiningEventTracker {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigFix(event: ConfigUpdaterMigrator.ConfigFixEvent) {
         event.transform(29, "mining.miningEvent.showType") { element ->
             if (element.asString == "BOTH") JsonPrimitive("ALL") else element

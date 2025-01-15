@@ -1,5 +1,6 @@
 package at.hannibal2.skyhanni.features.event.hoppity
 
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.data.ProfileStorageData
 import at.hannibal2.skyhanni.events.LorenzChatEvent
 import at.hannibal2.skyhanni.events.ProfileJoinEvent
@@ -9,7 +10,6 @@ import at.hannibal2.skyhanni.test.command.ErrorManager
 import at.hannibal2.skyhanni.utils.SimpleTimeMark
 import at.hannibal2.skyhanni.utils.SimpleTimeMark.Companion.asTimeMark
 import at.hannibal2.skyhanni.utils.SkyBlockTime
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import java.util.regex.Matcher
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -20,7 +20,7 @@ enum class HoppityEggType(
     val resetsAt: Int,
     var lastResetDay: Int = -1,
     private var claimed: Boolean = false,
-    private val altDay: Boolean = false
+    val altDay: Boolean = false
 ) {
     BREAKFAST("Breakfast", "§6", 7),
     LUNCH("Lunch", "§9", 14),
@@ -31,6 +31,7 @@ enum class HoppityEggType(
     SIDE_DISH("Side Dish", "§6§l", -1),
     HITMAN("Hitman", "§c", -1),
     BOUGHT("Bought", "§a", -1),
+    BOUGHT_ABIPHONE("✆ Bought", "§a", -1),
     CHOCOLATE_SHOP_MILESTONE("Shop Milestone", "§6§l", -1),
     CHOCOLATE_FACTORY_MILESTONE("Chocolate Milestone", "§6§l", -1),
     STRAY("Stray", "§a", -1)
@@ -48,6 +49,10 @@ enum class HoppityEggType(
         }
 
         return now.copy(day = now.day + daysToAdd, hour = resetsAt, minute = 0, second = 0).asTimeMark().timeUntil()
+    }
+
+    fun nextTime(): SimpleTimeMark {
+        return SimpleTimeMark.now() + timeUntil()
     }
 
     fun markClaimed(mark: SimpleTimeMark? = null) {
@@ -83,7 +88,7 @@ enum class HoppityEggType(
         private val mealLastFound
             get() = ProfileStorageData.profileSpecific?.chocolateFactory?.mealLastFound ?: mutableMapOf()
 
-        @SubscribeEvent
+        @HandleEvent
         fun onProfileJoin(event: ProfileJoinEvent) {
             mealLastFound.forEach { (meal, mark) ->
                 if (mark.passedSince() < 40.minutes) meal.markClaimed(mark)
@@ -92,6 +97,7 @@ enum class HoppityEggType(
         }
 
         val resettingEntries = entries.filter { it.resetsAt != -1 }
+        val sortedResettingEntries = resettingEntries.sortedBy { it.resetsAt }
 
         fun allFound() = resettingEntries.forEach { it.markClaimed() }
 

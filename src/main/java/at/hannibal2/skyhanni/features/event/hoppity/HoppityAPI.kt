@@ -5,11 +5,14 @@ import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.api.event.HandleEvent.Companion.HIGHEST
 import at.hannibal2.skyhanni.events.GuiContainerEvent
 import at.hannibal2.skyhanni.events.InventoryCloseEvent
+import at.hannibal2.skyhanni.events.InventoryFullyOpenedEvent
 import at.hannibal2.skyhanni.events.InventoryUpdatedEvent
 import at.hannibal2.skyhanni.events.LorenzChatEvent
+import at.hannibal2.skyhanni.events.MessageSendToServerEvent
 import at.hannibal2.skyhanni.events.hoppity.EggFoundEvent
 import at.hannibal2.skyhanni.events.hoppity.RabbitFoundEvent
 import at.hannibal2.skyhanni.features.event.hoppity.HoppityEggType.BOUGHT
+import at.hannibal2.skyhanni.features.event.hoppity.HoppityEggType.BOUGHT_ABIPHONE
 import at.hannibal2.skyhanni.features.event.hoppity.HoppityEggType.CHOCOLATE_FACTORY_MILESTONE
 import at.hannibal2.skyhanni.features.event.hoppity.HoppityEggType.CHOCOLATE_SHOP_MILESTONE
 import at.hannibal2.skyhanni.features.event.hoppity.HoppityEggType.Companion.getEggType
@@ -22,10 +25,11 @@ import at.hannibal2.skyhanni.features.inventory.chocolatefactory.ChocolateFactor
 import at.hannibal2.skyhanni.features.inventory.chocolatefactory.ChocolateFactoryStrayTracker
 import at.hannibal2.skyhanni.features.inventory.chocolatefactory.ChocolateFactoryStrayTracker.duplicateDoradoStrayPattern
 import at.hannibal2.skyhanni.features.inventory.chocolatefactory.ChocolateFactoryStrayTracker.duplicatePseudoStrayPattern
-import at.hannibal2.skyhanni.features.inventory.chocolatefactory.ChocolateFactoryStrayTracker.formLoreToSingleLine
 import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.utils.DelayedRun
 import at.hannibal2.skyhanni.utils.InventoryUtils
 import at.hannibal2.skyhanni.utils.ItemUtils.getLore
+import at.hannibal2.skyhanni.utils.ItemUtils.getSingleLineLore
 import at.hannibal2.skyhanni.utils.LorenzRarity
 import at.hannibal2.skyhanni.utils.LorenzRarity.DIVINE
 import at.hannibal2.skyhanni.utils.LorenzRarity.LEGENDARY
@@ -49,6 +53,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
+import kotlin.time.Duration.Companion.seconds
 
 @SkyHanniModule
 object HoppityAPI {
@@ -88,6 +93,14 @@ object HoppityAPI {
     private val shopLorePattern by ChocolateFactoryAPI.patternGroup.pattern(
         "milestone.shop",
         "§7Spend §6(?<amount>[\\d.MBk]*) Chocolate §7in.*",
+    )
+
+    /**
+     * REGEX-TEST: /selectnpcoption hoppity r_2_1
+     */
+    val pickupOutgoingCommandPattern by ChocolateFactoryAPI.patternGroup.pattern(
+        "hoppity.call.pickup.outgoing",
+        "\\/selectnpcoption hoppity r_2_1",
     )
 
     /**
@@ -136,20 +149,33 @@ object HoppityAPI {
         }
     }
 
-    val hoppityRarities by lazy { LorenzRarity.entries.filter { it <= DIVINE } }
+    val hoppityRarities = LorenzRarity.entries.filter { it <= DIVINE }
     private val hoppityDataSet = HoppityStateDataSet()
     private val processedStraySlots = mutableMapOf<Int, String>()
     private val miscProcessableItemTypes by lazy {
         listOf(Items.skull, Item.getItemFromBlock(Blocks.stained_glass_pane))
     }
 
-    fun isHoppityEvent() = (SkyblockSeason.currentSeason == SkyblockSeason.SPRING || SkyHanniMod.feature.dev.debug.alwaysHoppitys)
-    fun getEventEndMark(): SimpleTimeMark? = if (isHoppityEvent()) {
-        SkyBlockTime.fromSbYearAndMonth(SkyBlockTime.now().year, 3).asTimeMark()
-    } else null
+    private var checkNextInvOpen = false
+    private var lastHoppityCallAccept: SimpleTimeMark? = null
+
+    // If there is a time since lastHoppityCallAccept, we can assume this is an abiphone call
+    private fun getBoughtType(): HoppityEggType = if (lastHoppityCallAccept != null) BOUGHT_ABIPHONE else BOUGHT
+
+    fun isHoppityEvent() = (SkyblockSeason.SPRING.isSeason() || SkyHanniMod.feature.dev.debug.alwaysHoppitys)
+
+    fun getEventEndMark(): SimpleTimeMark? = if (isHoppityEvent()) getEventEndMark(SkyBlockTime.now().year) else null
+
+    fun getEventEndMark(year: Int) =
+        SkyBlockTime.fromSeason(year, SkyblockSeason.SUMMER, SkyblockSeason.SkyblockSeasonModifier.EARLY).asTimeMark()
+
+    fun getEventStartMark(year: Int) =
+        SkyBlockTime.fromSeason(year, SkyblockSeason.SPRING, SkyblockSeason.SkyblockSeasonModifier.EARLY).asTimeMark()
+
     fun rarityByRabbit(rabbit: String): LorenzRarity? = hoppityRarities.firstOrNull {
         it.chatColorCode == rabbit.substring(0, 2)
     }
+
     fun SkyBlockTime.isAlternateDay(): Boolean {
         if (!isHoppityEvent()) return false
         // Spring 1st (first day of event) is a normal day.
@@ -162,17 +188,19 @@ object HoppityAPI {
         return (month % 2 == 1) == (day % 2 == 0)
     }
 
-    private fun Map<Int, ItemStack>.filterStrayProcessable() = filter { (slotNumber, stack) ->
+    fun filterMayBeStray(items: Map<Int, ItemStack>) = items.filter { (slotIndex, stack) ->
         // Strays can only appear in the first 3 rows of the inventory, excluding the middle slot of the middle row.
-        slotNumber != 13 && slotNumber in 0..26 &&
-            // Don't process the same slot twice.
-            !processedStraySlots.contains(slotNumber) &&
+        slotIndex != 13 && slotIndex in 0..26 &&
             // Stack must not be null, and must be a skull.
             stack.item != null && stack.item == Items.skull &&
-            // All strays are skulls with a display name, and lore.
-            stack.hasDisplayName() && stack.getLore().isNotEmpty()
+            // All strays have a display name, all the time.
+            stack.hasDisplayName() && stack.displayName.isNotEmpty()
     }
 
+    private fun Map<Int, ItemStack>.filterStrayProcessable() = filterMayBeStray(this).filter {
+        !processedStraySlots.contains(it.key) && // Don't process the same slot twice.
+            it.value.getLore().isNotEmpty() // All processable strays have lore.
+    }
 
     private fun Slot.isMiscProcessable() =
         // All misc items are skulls or panes, with a display name, and lore.
@@ -187,12 +215,31 @@ object HoppityAPI {
         ).post()
     }
 
-    @SubscribeEvent
-    fun onInventoryClose(event: InventoryCloseEvent) {
-        processedStraySlots.clear()
+    @HandleEvent
+    fun onInventoryFullyOpened(event: InventoryFullyOpenedEvent) {
+        if (!checkNextInvOpen) return
+        checkNextInvOpen = false
+        if (event.inventoryName != "Hoppity") return
+        lastHoppityCallAccept = SimpleTimeMark.now()
     }
 
-    @SubscribeEvent
+    @HandleEvent
+    fun onInventoryClose(event: InventoryCloseEvent) {
+        processedStraySlots.clear()
+        if (lastHoppityCallAccept == null) return
+        DelayedRun.runDelayed(1.seconds) {
+            lastHoppityCallAccept = null
+        }
+    }
+
+    @HandleEvent
+    fun onCommandSend(event: MessageSendToServerEvent) {
+        if (!LorenzUtils.inSkyBlock) return
+        if (!pickupOutgoingCommandPattern.matches(event.message)) return
+        checkNextInvOpen = true
+    }
+
+    @HandleEvent
     fun onInventoryUpdated(event: InventoryUpdatedEvent) {
         // Remove any processed stray slots that are no longer in the inventory.
         processedStraySlots.entries.removeIf {
@@ -217,7 +264,7 @@ object HoppityAPI {
                     else -> return@matchMatcher
                 }
             }
-            ChocolateFactoryStrayTracker.strayDoradoPattern.matchMatcher(formLoreToSingleLine(itemStack.getLore())) {
+            ChocolateFactoryStrayTracker.strayDoradoPattern.matchMatcher(itemStack.getSingleLineLore()) {
                 // If the lore contains the escape pattern, we don't want to fire the event.
                 // There are also 3 separate messages that can match, which is why we need to check the time since the last fire.
                 if (ChocolateFactoryStrayTracker.doradoEscapeStrayPattern.anyMatches(itemStack.getLore())) return@matchMatcher
@@ -235,7 +282,7 @@ object HoppityAPI {
     }
 
 
-    @SubscribeEvent(priority = EventPriority.HIGH)
+    @HandleEvent(priority = HandleEvent.HIGH)
     fun onSlotClick(event: GuiContainerEvent.SlotClickEvent) {
         if (!miscProcessInvPattern.matches(InventoryUtils.openInventoryName())) return
         val slot = event.slot?.takeIf { it.isMiscProcessable() } ?: return
@@ -257,16 +304,19 @@ object HoppityAPI {
         when (event.type) {
             SIDE_DISH ->
                 "§d§lHOPPITY'S HUNT §r§dYou found a §r§6§lSide Dish §r§6Egg §r§din the Chocolate Factory§r§d!"
+
             CHOCOLATE_FACTORY_MILESTONE ->
                 "§d§lHOPPITY'S HUNT §r§dYou claimed a §r§6§lChocolate Milestone Rabbit §r§din the Chocolate Factory§r§d!"
+
             CHOCOLATE_SHOP_MILESTONE ->
                 "§d§lHOPPITY'S HUNT §r§dYou claimed a §r§6§lShop Milestone Rabbit §r§din the Chocolate Factory§r§d!"
+
             STRAY ->
                 "§d§lHOPPITY'S HUNT §r§dYou found a §r§aStray Rabbit§r§d!"
 
             // Each of these have their own from-Hypixel chats, so we don't need to add a message here
             // as it will be handled in the attemptFireRabbitFound method, from the chat event.
-            in resettingEntries, HITMAN, BOUGHT -> null
+            in resettingEntries, HITMAN, BOUGHT, BOUGHT_ABIPHONE -> null
             else -> "§d§lHOPPITY'S HUNT §r§7Unknown Egg Type: §c§l${event.type}"
         }?.let { hoppityDataSet.hoppityMessages.add(it) }
 
@@ -291,7 +341,7 @@ object HoppityAPI {
 
         HoppityEggsManager.eggBoughtPattern.matchMatcher(event.message) {
             if (group("rabbitname") != hoppityDataSet.lastName) return@matchMatcher
-            postApiEggFoundEvent(BOUGHT, event)
+            postApiEggFoundEvent(getBoughtType(), event)
         }
 
         HoppityEggsManager.rabbitFoundPattern.matchMatcher(event.message) {

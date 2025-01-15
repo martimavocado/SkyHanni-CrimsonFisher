@@ -1,6 +1,7 @@
 package at.hannibal2.skyhanni.features.event.diana
 
 import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.data.ElectionAPI.getElectionYear
 import at.hannibal2.skyhanni.events.ConfigLoadEvent
 import at.hannibal2.skyhanni.events.GuiRenderEvent
@@ -60,7 +61,7 @@ object MythologicalCreatureTracker {
     private val tracker = SkyHanniTracker(
         "Mythological Creature Tracker", { Data() }, { it.diana.mythologicalMobTracker },
         SkyHanniTracker.DisplayMode.MAYOR to {
-            it.diana.mythologicalMobTrackerPerElectionSeason.getOrPut(
+            it.diana.mythologicalMobTrackerPerElection.getOrPut(
                 SkyBlockTime.now().getElectionYear(), ::Data,
             )
         },
@@ -125,14 +126,14 @@ object MythologicalCreatureTracker {
         addSearchString(" §7- §e${data.creaturesSinceLastInquisitor.addSeparators()} §7Creatures since last Minos Inquisitor")
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigLoad(event: ConfigLoadEvent) {
         ConditionalUtils.onToggle(config.showPercentage) {
             tracker.update()
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onRenderOverlay(event: GuiRenderEvent) {
         if (!LorenzUtils.inSkyBlock) return
         if (!config.enabled) return

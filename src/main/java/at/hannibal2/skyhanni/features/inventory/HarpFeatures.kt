@@ -62,7 +62,7 @@ object HarpFeatures {
     private fun isHarpGui(chestName: String) = inventoryTitlePattern.matches(chestName)
     private fun isMenuGui(chestName: String) = menuTitlePattern.matches(chestName)
 
-    @SubscribeEvent
+    @HandleEvent
     fun onGui(event: GuiKeyPressEvent) {
         if (!LorenzUtils.inSkyBlock) return
         if (!config.keybinds) return
@@ -76,13 +76,7 @@ object HarpFeatures {
 
             event.cancel()
 
-            Minecraft.getMinecraft().playerController.windowClick(
-                chest.inventorySlots.windowId,
-                37 + index,
-                2,
-                3,
-                Minecraft.getMinecraft().thePlayer,
-            ) // middle clicks > left clicks
+            InventoryUtils.clickSlot(37 + index, chest.inventorySlots.windowId, 2, 3)
             lastClick = SimpleTimeMark.now()
             break
         }
@@ -102,8 +96,8 @@ object HarpFeatures {
 
     private var openTime: SimpleTimeMark = SimpleTimeMark.farPast()
 
-    @SubscribeEvent
-    fun onInventoryOpen(event: InventoryFullyOpenedEvent) {
+    @HandleEvent
+    fun onInventoryFullyOpened(event: InventoryFullyOpenedEvent) {
         if (!LorenzUtils.inSkyBlock) return
         if (config.quickRestart && isMenuGui(event.inventoryName)) {
             openTime = SimpleTimeMark.now()
@@ -127,7 +121,7 @@ object HarpFeatures {
         minecraft.currentScreen?.setWorldAndResolution(minecraft, width, height)
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onInventoryClose(event: InventoryCloseEvent) {
         if (!LorenzUtils.inSkyBlock) return
         if (!config.guiScale) return
@@ -157,14 +151,14 @@ object HarpFeatures {
         isGUIScaled = false
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onSlotClick(event: GuiContainerEvent.SlotClickEvent) {
         if (!LorenzUtils.inSkyBlock) return
 
         if (isHarpGui(InventoryUtils.openInventoryName())) {
             if (config.keybinds) {
                 // needed to not send duplicate clicks via keybind feature
-                if (event.clickTypeEnum == GuiContainerEvent.ClickType.HOTBAR) {
+                if (event.clickType == GuiContainerEvent.ClickType.HOTBAR) {
                     event.cancel()
                     return
                 }
@@ -178,18 +172,13 @@ object HarpFeatures {
         event.container.inventory.filterNotNull().indexOfFirst {
             songSelectedPattern.anyMatches(it.getLore())
         }.takeIf { it != -1 }?.let {
+            val clickType = event.clickType?.id ?: return
             event.cancel()
-            Minecraft.getMinecraft().playerController.windowClick(
-                event.container.windowId,
-                it,
-                event.clickedButton,
-                event.clickType,
-                Minecraft.getMinecraft().thePlayer,
-            )
+            InventoryUtils.clickSlot(it, event.container.windowId, event.clickedButton, clickType)
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onRenderItemTip(event: RenderItemTipEvent) {
         if (!LorenzUtils.inSkyBlock) return
         if (!config.showNumbers) return
@@ -204,7 +193,7 @@ object HarpFeatures {
         event.stackTip = KeyboardManager.getKeyName(keyCode).take(3)
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigFix(event: ConfigUpdaterMigrator.ConfigFixEvent) {
         event.move(2, "misc.harpKeybinds", "inventory.helper.harp.keybinds")
         event.move(2, "misc.harpNumbers", "inventory.helper.harp.showNumbers")

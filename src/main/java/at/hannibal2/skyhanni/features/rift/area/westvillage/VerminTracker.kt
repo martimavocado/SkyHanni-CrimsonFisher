@@ -1,5 +1,6 @@
 package at.hannibal2.skyhanni.features.rift.area.westvillage
 
+import at.hannibal2.skyhanni.api.event.HandleEvent
 import at.hannibal2.skyhanni.data.IslandType
 import at.hannibal2.skyhanni.events.GuiRenderEvent
 import at.hannibal2.skyhanni.events.InventoryFullyOpenedEvent
@@ -97,7 +98,7 @@ object VerminTracker {
         SILVERFISH(3, "§aSilverfish", silverfishPattern),
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onSecondPassed(event: SecondPassedEvent) {
         if (!RiftAPI.inRift()) return
         checkVacuum()
@@ -121,8 +122,8 @@ object VerminTracker {
         }
     }
 
-    @SubscribeEvent
-    fun onInventoryOpen(event: InventoryFullyOpenedEvent) {
+    @HandleEvent
+    fun onInventoryFullyOpened(event: InventoryFullyOpenedEvent) {
         if (!RiftAPI.inRift() || event.inventoryName != "Vermin Bin") return
 
         val bin = event.inventoryItems[13]?.getLore() ?: return
@@ -181,7 +182,7 @@ object VerminTracker {
         }
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onRenderOverlay(event: GuiRenderEvent) {
         if (!isEnabled()) return
         if (!config.showOutsideWestVillage && !RiftAPI.inWestVillage()) return
@@ -190,7 +191,7 @@ object VerminTracker {
         tracker.renderDisplay(config.position)
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onIslandChange(event: IslandChangeEvent) {
         if (event.newIsland == IslandType.THE_RIFT) {
             tracker.firstUpdate()
