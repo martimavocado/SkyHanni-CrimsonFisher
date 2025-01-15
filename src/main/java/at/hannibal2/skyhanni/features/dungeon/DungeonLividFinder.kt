@@ -7,12 +7,12 @@ import at.hannibal2.skyhanni.data.mob.Mob
 import at.hannibal2.skyhanni.events.CheckRenderEntityEvent
 import at.hannibal2.skyhanni.events.ConfigLoadEvent
 import at.hannibal2.skyhanni.events.DebugDataCollectEvent
-import at.hannibal2.skyhanni.events.DungeonBossRoomEnterEvent
-import at.hannibal2.skyhanni.events.DungeonCompleteEvent
 import at.hannibal2.skyhanni.events.LorenzRenderWorldEvent
 import at.hannibal2.skyhanni.events.LorenzWorldChangeEvent
 import at.hannibal2.skyhanni.events.MobEvent
 import at.hannibal2.skyhanni.events.ServerBlockChangeEvent
+import at.hannibal2.skyhanni.events.dungeon.DungeonBossRoomEnterEvent
+import at.hannibal2.skyhanni.events.dungeon.DungeonCompleteEvent
 import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
 import at.hannibal2.skyhanni.utils.BlockUtils.getBlockAt
 import at.hannibal2.skyhanni.utils.BlockUtils.getBlockStateAt
@@ -42,7 +42,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 @SkyHanniModule
 object DungeonLividFinder {
-
     private val config get() = SkyHanniMod.feature.dungeon.lividFinder
     private val blockLocation = LorenzVec(6, 109, 43)
 
@@ -85,7 +84,7 @@ object DungeonLividFinder {
         } else fakeLivids += mob
     }
 
-    @SubscribeEvent
+    @HandleEvent
     fun onConfigLoad(event: ConfigLoadEvent) {
         config.enabled.onToggle {
             reloadHighlight()
@@ -176,7 +175,7 @@ object DungeonLividFinder {
 
     private fun Mob.isLividColor(color: LorenzColor): Boolean {
         val chatColor = color.getChatColor()
-        return armorStand?.name?.startsWith("$chatColor﴾ $chatColor§lLivid") ?: false
+        return armorStand?.name?.startsWith("$chatColor﴾ $chatColor§lLivid") == true
     }
 
     @SubscribeEvent
@@ -202,7 +201,7 @@ object DungeonLividFinder {
 
     private fun inLividBossRoom() = DungeonAPI.inBossRoom && DungeonAPI.getCurrentBoss() == DungeonFloor.F5
 
-    @SubscribeEvent
+    @HandleEvent
     fun onDebug(event: DebugDataCollectEvent) {
         event.title("Livid Finder")
 
