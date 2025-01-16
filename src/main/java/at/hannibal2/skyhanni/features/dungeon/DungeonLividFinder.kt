@@ -178,8 +178,8 @@ object DungeonLividFinder {
         return armorStand?.name?.startsWith("$chatColor﴾ $chatColor§lLivid") == true
     }
 
-    @SubscribeEvent
-    fun onRenderWorld(event: LorenzRenderWorldEvent) {
+    @HandleEvent
+    fun onRenderWorld(event: RenderWorldEvent) {
         if (!inLividBossRoom() || !config.enabled.get()) return
         if (isBlind) return
 
